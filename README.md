@@ -1,513 +1,474 @@
-# 🌱 SelfGrow - Personal Journal & Growth App
+# 📱 SelfGrow - Personal Growth & Journaling App
 
-**A beautiful React Native app designed to help users achieve independence, track personal growth, and reach their dreams through journaling and goal setting.**
+![SelfGrow Banner](./assets/banner.png)
 
-![SelfGrow App](https://img.shields.io/badge/React%20Native-0.72.6-blue) ![Expo](https://img.shields.io/badge/Expo-49.0.0-black) ![Status](https://img.shields.io/badge/Status-Complete-green)
+## 🌟 Overview
 
----
+SelfGrow is a comprehensive personal growth application designed to help users track their journey through journaling, goal setting, and self-reflection. Built with React Native and Expo, this app provides a beautiful, intuitive interface for users to document their thoughts, set meaningful goals, and visualize their progress over time.
 
-## 🎯 **What is SelfGrow?**
+## ✨ Features
 
-SelfGrow is a comprehensive personal development app that combines:
-- **📝 Smart Journaling** - Write entries with mood tracking and hobby-based prompts
-- **🎯 Goal Management** - Set, track, and complete personal goals
-- **🏆 Achievement System** - Unlock achievements as you grow
-- **📊 Progress Tracking** - Visualize your personal growth journey
-- **🎨 Beautiful Design** - Warm, inspiring UI that motivates daily use
+- **🔐 User Authentication**: Secure login and registration system with demo account option
+- **📝 Journal Entries**: Create, edit, and organize personal reflections with mood tracking
+- **🎯 Goal Setting**: Set, track, and complete goals across different life categories
+- **🏆 Achievement System**: Unlock badges and achievements as you progress
+- **📊 Growth Analytics**: Track your journaling streak, completed goals, and overall progress
+- **🎨 Beautiful UI**: Thoughtfully designed interface with smooth animations and transitions
+- **🌙 Personalization**: Tailor the experience based on selected hobbies and interests
+- **💾 Offline Storage**: All data is stored locally for privacy and offline access
+- **📱 Cross-Platform**: Works seamlessly on iOS and Android devices
 
----
+## 📸 Screenshots
 
-## ✨ **Key Features**
+<div style="display: flex; flex-wrap: wrap; gap: 10px; justify-content: center;">
+  <img src="./assets/screenshots/welcome.png" width="200" alt="Welcome Screen" />
+  <img src="./assets/screenshots/login.png" width="200" alt="Login Screen" />
+  <img src="./assets/screenshots/home.png" width="200" alt="Home Dashboard" />
+  <img src="./assets/screenshots/journal.png" width="200" alt="Journal Screen" />
+  <img src="./assets/screenshots/goals.png" width="200" alt="Goals Screen" />
+  <img src="./assets/screenshots/profile.png" width="200" alt="Profile Screen" />
+</div>
 
-### 🔐 **Authentication System**
-- Beautiful onboarding flow with welcome screen
-- User registration with hobby selection
-- Secure login with demo account option
-- Persistent user sessions
+## 🚀 Getting Started
 
-### 📝 **Advanced Journaling**
-- Rich text editor with title and content
-- Mood tracking with visual indicators
-- Photo attachments for entries
-- Hobby-based writing prompts
-- Search and filter entries
-- Entry statistics and word counts
+### Prerequisites
 
-### 🎯 **Goal Management**
-- Multiple goal categories (Health, Career, Personal, etc.)
-- Priority levels (Low, Medium, High)
-- Goal templates for inspiration
-- Progress tracking and completion
-- Deadline management
-
-### 👤 **User Profile & Analytics**
-- Comprehensive user dashboard
-- Detailed statistics and insights
-- Achievement system with unlockable badges
-- Hobby management
-- App settings and preferences
-
-### 🎨 **Design Excellence**
-- Warm color palette (no blues!) with corals, oranges, and golds
-- Smooth animations and transitions
-- Responsive design for all screen sizes
-- Professional shadows and gradients
-- Accessibility-focused UI
-
----
-
-## 🏗️ **Technical Architecture**
-
-### **Frontend Framework**
-- **React Native 0.72.6** - Cross-platform mobile development
-- **Expo 49.0.0** - Development platform and tools
-- **React Navigation 6** - Screen navigation and routing
-
-### **State Management**
-- **React Context API** - Global state management
-- **useReducer Hook** - Complex state logic
-- **AsyncStorage** - Local data persistence
-
-### **UI Components**
-- **Custom Design System** - Consistent styling and components
-- **Linear Gradients** - Beautiful background effects
-- **Animations** - React Native Animatable for smooth transitions
-- **Haptic Feedback** - Touch response for better UX
-
-### **Key Libraries**
-\`\`\`json
-{
-  "@react-navigation/native": "^6.1.7",
-  "@react-navigation/stack": "^6.3.17",
-  "@react-navigation/bottom-tabs": "^6.5.8",
-  "expo-linear-gradient": "~12.3.0",
-  "expo-image-picker": "~14.3.2",
-  "@react-native-async-storage/async-storage": "1.18.2",
-  "react-native-animatable": "^1.3.3",
-  "expo-haptics": "~12.4.0"
-}
-\`\`\`
-
----
-
-## 📁 **Project Structure**
-
-\`\`\`
-SelfGrow/
-├── src/
-│   ├── components/           # Reusable UI components
-│   │   ├── common/          # Generic components (buttons, etc.)
-│   │   └── hobbies/         # Hobby-specific components
-│   ├── context/             # Global state management
-│   │   └── AppContext.js    # Main app context
-│   ├── navigation/          # App navigation setup
-│   │   └── AppNavigator.js  # Navigation configuration
-│   ├── screens/             # All app screens
-│   │   ├── auth/           # Authentication screens
-│   │   └── main/           # Main app screens
-│   └── styles/             # Design system
-│       ├── colors.js       # Color palette
-│       └── globalStyles.js # Typography & spacing
-├── App.js                  # Root component
-├── app.json               # Expo configuration
-└── package.json           # Dependencies
-\`\`\`
-
----
-
-## 🚀 **Getting Started**
-
-### **Prerequisites**
-- Node.js (v16 or higher)
+- Node.js (v14 or newer)
 - npm or yarn
-- Expo CLI
-- iOS Simulator or Android Emulator (optional)
-- Expo Go app on your phone
+- Expo CLI (`npm install -g expo-cli`)
 
-### **Installation**
+### Installation
 
-1. **Create the project:**
+1. Clone the repository:
+   \`\`\`bash
+   git clone https://github.com/yourusername/selfgrow-app.git
+   cd selfgrow-app
+   \`\`\`
+
+2. Install dependencies:
+   \`\`\`bash
+   npm install
+   # or
+   yarn install
+   \`\`\`
+
+3. Start the development server:
+   \`\`\`bash
+   npm start
+   # or
+   yarn start
+   \`\`\`
+
+4. Open the app:
+   - Scan the QR code with the Expo Go app on your phone
+   - Press 'a' to open on Android emulator
+   - Press 'i' to open on iOS simulator
+
+### Expo QR Code
+
+When you run `npm start`, Expo will generate a QR code in your terminal. Scan this code with the Expo Go app (available on [iOS App Store](https://apps.apple.com/app/expo-go/id982107779) and [Google Play Store](https://play.google.com/store/apps/details?id=host.exp.exponent)) to open the app on your physical device.
+
+You can also create a permanent QR code by publishing your app to Expo:
+
 \`\`\`bash
-npx create-expo-app SelfGrow --template blank
-cd SelfGrow
-\`\`\`
-
-2. **Install dependencies:**
-\`\`\`bash
-npm install @react-navigation/native @react-navigation/stack @react-navigation/bottom-tabs react-native-screens react-native-safe-area-context @expo/vector-icons expo-linear-gradient expo-image-picker @react-native-async-storage/async-storage react-native-animatable expo-haptics expo-blur
-\`\`\`
-
-3. **Copy the source code:**
-   - Copy all files from the code project above into your project
-   - Replace the default `App.js` with our version
-
-4. **Start the development server:**
-\`\`\`bash
-npm start
-\`\`\`
-
-5. **Run on device:**
-   - Scan the QR code with Expo Go app (iOS/Android)
-   - Or press `i` for iOS simulator, `a` for Android emulator
-
----
-
-## 📱 **App Flow & User Journey**
-
-### **1. Onboarding (Authentication)**
-\`\`\`
-Welcome Screen → Register/Login → Hobby Selection → Main App
-\`\`\`
-
-### **2. Main App Navigation**
-\`\`\`
-Home (Dashboard) ↔ Journal ↔ Goals ↔ Profile
-\`\`\`
-
-### **3. Core User Actions**
-- **Daily Journaling**: Write entries with mood and photos
-- **Goal Setting**: Create and track personal goals
-- **Progress Review**: Check stats and achievements
-- **Customization**: Update hobbies and settings
-
----
-
-## 🎨 **Design System Explained**
-
-### **Color Palette**
-\`\`\`javascript
-// Primary Colors - Warm & Inspiring
-coral: "#FF6B6B"     // Energy & passion
-orange: "#FF8E53"    // Creativity & enthusiasm  
-peach: "#FF9A8B"     // Comfort & warmth
-sunset: "#FFA726"    // Achievement & success
-
-// Secondary Colors - Supporting growth
-lavender: "#A8E6CF"  // Growth & renewal
-cream: "#FFF8E1"     // Peace & clarity
-rose: "#FFB3BA"      // Self-love & care
-gold: "#FFD93D"      // Celebration & victory
-\`\`\`
-
-### **Typography Scale**
-\`\`\`javascript
-h1: 32px, bold       // Main headings
-h2: 24px, bold       // Section headings  
-h3: 20px, semibold   // Subsection headings
-body: 16px, regular  // Main content
-bodySmall: 14px      // Secondary content
-caption: 12px        // Labels & metadata
-\`\`\`
-
-### **Spacing System**
-\`\`\`javascript
-xs: 4px    // Tight spacing
-sm: 8px    // Small spacing
-md: 16px   // Medium spacing (base)
-lg: 24px   // Large spacing
-xl: 32px   // Extra large spacing
-xxl: 48px  // Maximum spacing
-\`\`\`
-
----
-
-## 🧠 **Code Architecture Explained**
-
-### **1. App Context (State Management)**
-\`\`\`javascript
-// Central state management for the entire app
-const AppContext = createContext()
-
-// State includes:
-- user: User information and authentication
-- entries: All journal entries
-- goals: User goals and progress
-- stats: App usage statistics
-- selectedHobbies: User's interests
-\`\`\`
-
-### **2. Navigation Structure**
-\`\`\`javascript
-// Conditional navigation based on authentication
-{state.isAuthenticated ? (
-  <MainTabNavigator />  // Home, Journal, Goals, Profile
-) : (
-  <AuthStackNavigator /> // Welcome, Login, Register
-)}
-\`\`\`
-
-### **3. Component Architecture**
-\`\`\`javascript
-// Each screen follows this pattern:
-1. Import dependencies and context
-2. Define component state with useState
-3. Set up animations with useRef
-4. Handle user interactions
-5. Render UI with styled components
-\`\`\`
-
-### **4. Data Persistence**
-\`\`\`javascript
-// Automatic saving to device storage
-useEffect(() => {
-  saveToStorage("entries", state.entries)
-}, [state.entries])
-
-// Loading on app start
-const initializeApp = async () => {
-  const savedData = await loadFromStorage("entries")
-  dispatch({ type: "LOAD_DATA", payload: savedData })
-}
-\`\`\`
-
----
-
-## 🎯 **Key Features Deep Dive**
-
-### **📝 Journal Screen Features**
-
-**Writing Interface:**
-- Rich text input with title and content
-- Mood selector with 6 emotional states
-- Photo attachment from device gallery
-- Hobby-based writing prompts for inspiration
-
-**Entry Management:**
-- Search and filter entries
-- Edit existing entries
-- Delete with confirmation
-- Visual mood indicators
-
-**Smart Prompts:**
-\`\`\`javascript
-// Prompts adapt to user's hobbies
-const HOBBY_PROMPTS = {
-  art: ["What colors represent your mood today?"],
-  reading: ["What book character would you meet today?"],
-  music: ["What song matches your feelings?"]
-}
-\`\`\`
-
-### **🎯 Goals Screen Features**
-
-**Goal Creation:**
-- 6 categories (Health, Career, Personal, etc.)
-- Priority levels (Low, Medium, High)
-- Optional deadlines and descriptions
-- Goal templates for inspiration
-
-**Goal Management:**
-- Filter by category and completion status
-- Mark goals as completed
-- Track completion statistics
-- Visual progress indicators
-
-**Achievement System:**
-\`\`\`javascript
-const ACHIEVEMENTS = [
-  {
-    id: "first_entry",
-    title: "First Steps", 
-    requirement: (state) => state.entries.length >= 1
-  }
-]
-\`\`\`
-
-### **👤 Profile Screen Features**
-
-**User Dashboard:**
-- Personal statistics and insights
-- Achievement showcase
-- Hobby management
-- Quick action buttons
-
-**Advanced Analytics:**
-- Total words written
-- Average words per entry
-- Current and longest streaks
-- Monthly entry counts
-
-**Settings & Preferences:**
-- Notification toggles
-- Privacy settings
-- Data export options
-- Help and feedback
-
----
-
-## 🔧 **Customization Guide**
-
-### **Adding New Colors**
-\`\`\`javascript
-// In src/styles/colors.js
-export const COLORS = {
-  // Add your custom colors
-  custom: {
-    newColor: "#YOUR_HEX_CODE"
-  }
-}
-\`\`\`
-
-### **Creating New Achievements**
-\`\`\`javascript
-// In ProfileScreen.js
-const NEW_ACHIEVEMENT = {
-  id: "unique_id",
-  title: "Achievement Name",
-  description: "What user needs to do",
-  icon: "🏆",
-  color: COLORS.your.color,
-  requirement: (state) => {
-    // Your logic here
-    return state.someValue >= targetValue
-  }
-}
-\`\`\`
-
-### **Adding New Goal Categories**
-\`\`\`javascript
-// In GoalsScreen.js
-const NEW_CATEGORY = {
-  id: "category_id",
-  name: "Category Name", 
-  icon: "🎯",
-  color: COLORS.your.color
-}
-\`\`\`
-
----
-
-## 📊 **Performance Optimizations**
-
-### **Memory Management**
-- Efficient state updates with useReducer
-- Memoized components where appropriate
-- Optimized image handling with compression
-
-### **Storage Optimization**
-- Automatic data persistence
-- Incremental saves to prevent data loss
-- Efficient JSON serialization
-
-### **Animation Performance**
-- Hardware-accelerated animations
-- Staggered entrance animations
-- Smooth transitions between screens
-
----
-
-## 🧪 **Testing the App**
-
-### **Manual Testing Checklist**
-
-**Authentication Flow:**
-- [ ] Welcome screen displays correctly
-- [ ] Registration with hobby selection works
-- [ ] Login with demo account functions
-- [ ] User data persists between sessions
-
-**Journal Features:**
-- [ ] Create new entry with title and content
-- [ ] Select mood and attach photo
-- [ ] Edit existing entries
-- [ ] Search and filter entries
-- [ ] Writing prompts display correctly
-
-**Goals Management:**
-- [ ] Create goals in different categories
-- [ ] Set priorities and deadlines
-- [ ] Mark goals as completed
-- [ ] Filter goals by category
-- [ ] Goal templates work
-
-**Profile & Settings:**
-- [ ] User stats display correctly
-- [ ] Achievements unlock properly
-- [ ] Hobby editing functions
-- [ ] Settings toggles work
-- [ ] Logout preserves data
-
----
-
-## 🚀 **Deployment Options**
-
-### **Expo Publish**
-\`\`\`bash
-# Publish to Expo for easy sharing
 expo publish
 \`\`\`
 
-### **Build for App Stores**
-\`\`\`bash
-# Build for iOS
-expo build:ios
+This will give you a persistent URL and QR code that you can share with others.
 
-# Build for Android  
-expo build:android
+## 📂 Project Structure
+
+\`\`\`
+selfgrow-app/
+├── assets/                  # Images, fonts, and other static assets
+├── src/
+│   ├── components/          # Reusable UI components
+│   │   ├── common/          # Shared components (buttons, inputs, etc.)
+│   │   └── hobbies/         # Hobby-specific components
+│   ├── context/             # React Context for state management
+│   ├── navigation/          # Navigation configuration
+│   ├── screens/             # App screens
+│   │   ├── auth/            # Authentication screens
+│   │   └── main/            # Main app screens
+│   ├── styles/              # Global styles and theme
+│   └── utils/               # Helper functions and utilities
+├── App.js                   # App entry point
+└── package.json             # Project dependencies
 \`\`\`
 
-### **Standalone Apps**
-\`\`\`bash
-# Create standalone apps
-expo build:ios --type archive
-expo build:android --type apk
+## 💾 Data Storage & Retrieval
+
+SelfGrow uses AsyncStorage for local data persistence. Here's how data is managed:
+
+### Storage Implementation
+
+The app uses a centralized approach to data management through the AppContext:
+
+\`\`\`javascript
+// In src/context/AppContext.js
+
+// Save data to storage
+const saveToStorage = async (key, data) => {
+  try {
+    await AsyncStorage.setItem(key, JSON.stringify(data));
+  } catch (error) {
+    console.error("Error saving to storage:", error);
+  }
+};
+
+// Load data from storage
+const loadFromStorage = async (key) => {
+  try {
+    const data = await AsyncStorage.getItem(key);
+    return data ? JSON.parse(data) : null;
+  } catch (error) {
+    console.error("Error loading from storage:", error);
+    return null;
+  }
+};
 \`\`\`
 
----
+### Auto-Save Functionality
 
-## 🎓 **Learning Outcomes**
+The app automatically saves data whenever it changes using React's useEffect hook:
 
-By building SelfGrow, you've learned:
+\`\`\`javascript
+// Auto-save user data when it changes
+useEffect(() => {
+  if (state.user) {
+    saveToStorage("user", state.user);
+  }
+}, [state.user]);
 
-### **React Native Fundamentals**
-- Component lifecycle and hooks
-- Navigation between screens
-- State management with Context API
-- Local data persistence
-- Image handling and media
+// Auto-save journal entries when they change
+useEffect(() => {
+  saveToStorage("entries", state.entries);
+}, [state.entries]);
 
-### **Mobile UI/UX Design**
-- Touch interactions and gestures
-- Responsive design principles
-- Animation and micro-interactions
-- Accessibility best practices
-- Platform-specific considerations
+// Auto-save goals when they change
+useEffect(() => {
+  saveToStorage("goals", state.goals);
+}, [state.goals]);
+\`\`\`
 
-### **Professional Development**
-- Code organization and architecture
-- Design system implementation
-- Performance optimization
-- Testing strategies
-- Documentation writing
+### Data Loading on App Start
 
-### **Advanced Concepts**
-- Complex state management
-- Data persistence strategies
-- Custom hook creation
-- Modal and overlay patterns
-- Form validation and UX
+When the app starts, it loads all saved data from AsyncStorage:
 
----
+\`\`\`javascript
+useEffect(() => {
+  const initializeApp = async () => {
+    dispatch({ type: ActionTypes.SET_LOADING, payload: true });
 
-## 🎉 **Congratulations!**
+    try {
+      // Load user data
+      const userData = await loadFromStorage("user");
+      const hobbiesData = await loadFromStorage("hobbies");
+      const entriesData = await loadFromStorage("entries");
+      const goalsData = await loadFromStorage("goals");
 
-You've successfully built a **professional-grade mobile application** that demonstrates:
+      if (userData || hobbiesData || entriesData || goalsData) {
+        dispatch({
+          type: ActionTypes.LOAD_DATA,
+          payload: {
+            user: userData,
+            isAuthenticated: !!userData,
+            selectedHobbies: hobbiesData || [],
+            entries: entriesData || [],
+            goals: goalsData || [],
+          },
+        });
+      }
+    } catch (error) {
+      console.error("Error initializing app:", error);
+    } finally {
+      dispatch({ type: ActionTypes.SET_LOADING, payload: false });
+    }
+  };
 
-✅ **Technical Excellence** - Clean code, proper architecture, performance optimization
-✅ **Design Mastery** - Beautiful UI, consistent design system, smooth animations  
-✅ **User Experience** - Intuitive navigation, helpful features, accessibility
-✅ **Real-World Functionality** - Data persistence, complex state management, media handling
+  initializeApp();
+}, []);
+\`\`\`
 
-**SelfGrow is portfolio-ready and showcases your ability to build production-quality mobile apps!**
+## 📜 Daily Quotes & Inspirational Content
 
----
+### Adding Daily Quotes
 
-## 📞 **Support & Resources**
+To implement daily quotes and inspirational content, add the following files:
 
-- **Expo Documentation**: https://docs.expo.dev/
-- **React Native Docs**: https://reactnative.dev/docs/getting-started
-- **React Navigation**: https://reactnavigation.org/docs/getting-started
+1. First, create a data file for quotes:
 
----
+\`\`\`javascript
+// src/data/quotes.js
+export const DAILY_QUOTES = [
+  {
+    quote: "The journey of a thousand miles begins with a single step.",
+    author: "Lao Tzu"
+  },
+  {
+    quote: "Believe you can and you're halfway there.",
+    author: "Theodore Roosevelt"
+  },
+  {
+    quote: "It does not matter how slowly you go as long as you do not stop.",
+    author: "Confucius"
+  },
+  {
+    quote: "The only way to do great work is to love what you do.",
+    author: "Steve Jobs"
+  },
+  {
+    quote: "You are never too old to set another goal or to dream a new dream.",
+    author: "C.S. Lewis"
+  },
+  // Add more quotes as needed
+];
 
-**Built with ❤️ for personal growth and independence**
+export const INSPIRATIONAL_VERSES = [
+  {
+    verse: "For I know the plans I have for you, declares the Lord, plans to prosper you and not to harm you, plans to give you hope and a future.",
+    reference: "Jeremiah 29:11"
+  },
+  {
+    verse: "I can do all things through Christ who strengthens me.",
+    reference: "Philippians 4:13"
+  },
+  {
+    verse: "Be strong and courageous. Do not be afraid; do not be discouraged, for the Lord your God will be with you wherever you go.",
+    reference: "Joshua 1:9"
+  },
+  {
+    verse: "Trust in the Lord with all your heart and lean not on your own understanding.",
+    reference: "Proverbs 3:5"
+  },
+  {
+    verse: "The Lord is my shepherd, I lack nothing.",
+    reference: "Psalm 23:1"
+  },
+  // Add more verses as needed
+];
+\`\`\`
+
+2. Create a utility function to get the daily content:
+
+\`\`\`javascript
+// src/utils/dailyContent.js
+import { DAILY_QUOTES, INSPIRATIONAL_VERSES } from '../data/quotes';
+
+// Get a quote based on the day of the year
+export const getDailyQuote = () => {
+  const today = new Date();
+  const dayOfYear = getDayOfYear(today);
+  const index = dayOfYear % DAILY_QUOTES.length;
+  return DAILY_QUOTES[index];
+};
+
+// Get an inspirational verse based on the day of the year
+export const getDailyVerse = () => {
+  const today = new Date();
+  const dayOfYear = getDayOfYear(today);
+  const index = dayOfYear % INSPIRATIONAL_VERSES.length;
+  return INSPIRATIONAL_VERSES[index];
+};
+
+// Helper function to get the day of the year (0-365)
+const getDayOfYear = (date) => {
+  const start = new Date(date.getFullYear(), 0, 0);
+  const diff = date - start;
+  const oneDay = 1000 * 60 * 60 * 24;
+  return Math.floor(diff / oneDay);
+};
+\`\`\`
+
+3. Create a component to display the daily content:
+
+\`\`\`javascript
+// src/components/common/DailyInspiration.js
+import React, { useState } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
+import { COLORS } from '../../styles/colors';
+import { TYPOGRAPHY, SPACING, SHADOWS } from '../../styles/globalStyles';
+import { getDailyQuote, getDailyVerse } from '../../utils/dailyContent';
+
+const DailyInspiration = () => {
+  const [showVerse, setShowVerse] = useState(false);
+  const dailyQuote = getDailyQuote();
+  const dailyVerse = getDailyVerse();
+  
+  const toggleContent = () => {
+    setShowVerse(!showVerse);
+  };
+  
+  const content = showVerse ? dailyVerse : dailyQuote;
+  
+  return (
+    <TouchableOpacity onPress={toggleContent} activeOpacity={0.9}>
+      <LinearGradient
+        colors={showVerse ? COLORS.gradients.gentle : COLORS.gradients.dream}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+        style={styles.container}
+      >
+        <Text style={styles.contentType}>
+          {showVerse ? '✝️ Daily Word' : '💭 Daily Quote'}
+        </Text>
+        <Text style={styles.content}>"{content.verse || content.quote}"</Text>
+        <Text style={styles.author}>
+          — {content.reference || content.author}
+        </Text>
+        <Text style={styles.tapHint}>Tap to see {showVerse ? 'quote' : 'verse'}</Text>
+      </LinearGradient>
+    </TouchableOpacity>
+  );
+};
+
+const styles = StyleSheet.create({
+  container: {
+    borderRadius: 16,
+    padding: SPACING.lg,
+    marginHorizontal: SPACING.lg,
+    marginVertical: SPACING.md,
+    ...SHADOWS.medium,
+  },
+  contentType: {
+    ...TYPOGRAPHY.caption,
+    color: COLORS.neutral.white,
+    marginBottom: SPACING.sm,
+    fontWeight: '600',
+  },
+  content: {
+    ...TYPOGRAPHY.body,
+    color: COLORS.neutral.white,
+    fontStyle: 'italic',
+    marginBottom: SPACING.sm,
+    lineHeight: 24,
+  },
+  author: {
+    ...TYPOGRAPHY.bodySmall,
+    color: COLORS.neutral.white + 'DD',
+    textAlign: 'right',
+    marginBottom: SPACING.xs,
+  },
+  tapHint: {
+    ...TYPOGRAPHY.caption,
+    color: COLORS.neutral.white + '99',
+    textAlign: 'center',
+    marginTop: SPACING.sm,
+  },
+});
+
+export default DailyInspiration;
+\`\`\`
+
+4. Add the component to your HomeScreen:
+
+\`\`\`javascript
+// In src/screens/main/HomeScreen.js
+import DailyInspiration from '../../components/common/DailyInspiration';
+
+// Add this inside your ScrollView, perhaps after the header
+<Animatable.View animation="fadeIn" delay={900}>
+  <DailyInspiration />
+</Animatable.View>
+\`\`\`
+
+## 🔧 Troubleshooting
+
+### Common Issues
+
+1. **App crashes on startup**
+   - Make sure you have installed all dependencies: `npm install`
+   - Check if AsyncStorage is properly linked: `npx expo install @react-native-async-storage/async-storage`
+
+2. **Data not saving**
+   - Verify that AsyncStorage is working by checking the console logs
+   - Make sure you're not exceeding AsyncStorage size limits (typically 6MB)
+   - Try clearing AsyncStorage: `AsyncStorage.clear()`
+
+3. **UI rendering issues**
+   - Ensure you have the latest version of Expo SDK
+   - Check for conflicting style properties
+   - Verify that all required fonts are loaded
+
+4. **Navigation problems**
+   - Make sure all screens are properly registered in the navigator
+   - Check for typos in screen names
+   - Verify that the navigation container is properly set up
+
+### Debugging Tips
+
+- Use `console.log()` statements to track data flow
+- Enable the React Native Debugger for more advanced debugging
+- Check the Expo logs for any warnings or errors
+- Use the React DevTools to inspect component hierarchies
+
+## 📱 Building for Production
+
+To create a standalone app for distribution:
+
+1. Configure app.json with your app details:
+   \`\`\`json
+   {
+     "expo": {
+       "name": "SelfGrow",
+       "slug": "selfgrow",
+       "version": "1.0.0",
+       "orientation": "portrait",
+       "icon": "./assets/icon.png",
+       "splash": {
+         "image": "./assets/splash.png",
+         "resizeMode": "contain",
+         "backgroundColor": "#FF6B6B"
+       },
+       "updates": {
+         "fallbackToCacheTimeout": 0
+       },
+       "assetBundlePatterns": ["**/*"],
+       "ios": {
+         "supportsTablet": true,
+         "bundleIdentifier": "com.yourcompany.selfgrow"
+       },
+       "android": {
+         "adaptiveIcon": {
+           "foregroundImage": "./assets/adaptive-icon.png",
+           "backgroundColor": "#FF6B6B"
+         },
+         "package": "com.yourcompany.selfgrow"
+       },
+       "web": {
+         "favicon": "./assets/favicon.png"
+       }
+     }
+   }
+   \`\`\`
+
+2. Build for Android:
+   \`\`\`bash
+   expo build:android
+   \`\`\`
+
+3. Build for iOS:
+   \`\`\`bash
+   expo build:ios
+   \`\`\`
+
+## 📄 License
+
+This project is licensed under the MIT License - see the LICENSE file for details.
+
+## 🙏 Acknowledgements
+
+- [React Native](https://reactnative.dev/)
+- [Expo](https://expo.dev/)
+- [React Navigation](https://reactnavigation.org/)
+- [AsyncStorage](https://react-native-async-storage.github.io/async-storage/)
+- [Expo Linear Gradient](https://docs.expo.dev/versions/latest/sdk/linear-gradient/)
+- [React Native Animatable](https://github.com/oblador/react-native-animatable)
+
+## 📞 Contact
+
+Your Name - [your.email@example.com](mailto:your.email@example.com)
+
+Project Link: [https://github.com/yourusername/selfgrow-app](https://github.com/yourusername/selfgrow-app)
+
