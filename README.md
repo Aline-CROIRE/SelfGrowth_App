@@ -129,26 +129,21 @@ A comprehensive personal growth mobile application built with React Native and E
 ## 📸 Screenshots
 
 ### Authentication Flow
-![Welcome_Screen](https://github.com/user-attachments/assets/f130980d-70eb-46ed-a350-c4dadf0e0484)
-![Login_Screen](https://github.com/user-attachments/assets/03d09ddd-4934-4a19-b05b-1a4cbba659b8)
-![Register_Screen](https://github.com/user-attachments/assets/f0b63946-3d9e-4aad-b2a5-e22fe7d192d3)
+![Welcome_Screen](https://github.com/user-attachments/assets/f130980d-70eb-46ed-a350-c4dadf0e0484) ![Login_Screen](https://github.com/user-attachments/assets/03d09ddd-4934-4a19-b05b-1a4cbba659b8) ![Register_Screen](https://github.com/user-attachments/assets/f0b63946-3d9e-4aad-b2a5-e22fe7d192d3)
+
+
 
 
 ### Main Application
 ![Home_Dashboard](https://github.com/user-attachments/assets/cb875e5e-943a-416e-a839-2276d1525b49)
-
 ![Journal_Screen](https://github.com/user-attachments/assets/fef9c442-fba9-4b23-8eb5-573e19a94013)
-
 ![Goal_Screen](https://github.com/user-attachments/assets/2b091204-58d7-4557-bc75-154b40475c0f)
-
 ![Profile_Screen](https://github.com/user-attachments/assets/a0384d69-a95c-4133-b996-1f8604295b9f)
 
 
 ### Additional Features
 ![Achievements](https://github.com/user-attachments/assets/2071d199-a4fb-4539-8ff9-027f49be4aef)
-
 ![Daily_Insiparation](https://github.com/user-attachments/assets/610fcc08-55e3-4311-8a19-8cfb63f5ec03)
-
 ![Statistics](https://github.com/user-attachments/assets/15a34945-336b-4357-8d8e-d83c78b5044d)
 
 
