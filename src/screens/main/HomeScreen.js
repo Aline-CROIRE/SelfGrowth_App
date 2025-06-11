@@ -9,6 +9,7 @@ import * as Animatable from "react-native-animatable"
 import { SafeAreaView } from "react-native-safe-area-context"
 
 import { useApp } from "../../context/AppContext"
+import DailyInspiration from "../../components/common/DailyInsparation"
 import { COLORS } from "../../styles/colors"
 import { TYPOGRAPHY, SPACING, SHADOWS } from "../../styles/globalStyles"
 
@@ -36,15 +37,27 @@ const HomeScreen = ({ navigation }) => {
     animateEntrance()
   }, [])
 
-  // 🎯 GET MOTIVATIONAL GREETING
+  // 🎯 GET PERSONALIZED GREETING - Uses actual username
   const getGreeting = () => {
     const hour = new Date().getHours()
-    const name = user?.name || "Champion"
+    const name = user?.name || "Champion" // Now uses actual username from database
 
     if (hour < 12) return `Good morning, ${name}! ☀️`
     if (hour < 17) return `Good afternoon, ${name}! 🌤️`
     return `Good evening, ${name}! 🌙`
   }
+
+  // 🎨 RENDER QUICK ACTION - Now with actual functionality
+  const renderQuickAction = (title, icon, color, onPress) => (
+    <TouchableOpacity style={styles.quickAction} onPress={onPress} activeOpacity={0.8}>
+      <LinearGradient colors={[COLORS.neutral.white, COLORS.neutral.lightGray]} style={styles.quickActionGradient}>
+        <View style={[styles.quickActionIcon, { backgroundColor: color }]}>
+          <Text style={styles.quickActionIconText}>{icon}</Text>
+        </View>
+        <Text style={styles.quickActionTitle}>{title}</Text>
+      </LinearGradient>
+    </TouchableOpacity>
+  )
 
   // 🎨 RENDER STATS CARD
   const renderStatsCard = (title, value, icon, color, onPress) => (
@@ -58,18 +71,6 @@ const HomeScreen = ({ navigation }) => {
         <Text style={styles.statsIcon}>{icon}</Text>
         <Text style={styles.statsValue}>{value}</Text>
         <Text style={styles.statsTitle}>{title}</Text>
-      </LinearGradient>
-    </TouchableOpacity>
-  )
-
-  // 🎨 RENDER QUICK ACTION
-  const renderQuickAction = (title, icon, color, onPress) => (
-    <TouchableOpacity style={styles.quickAction} onPress={onPress} activeOpacity={0.8}>
-      <LinearGradient colors={[COLORS.neutral.white, COLORS.neutral.lightGray]} style={styles.quickActionGradient}>
-        <View style={[styles.quickActionIcon, { backgroundColor: color }]}>
-          <Text style={styles.quickActionIconText}>{icon}</Text>
-        </View>
-        <Text style={styles.quickActionTitle}>{title}</Text>
       </LinearGradient>
     </TouchableOpacity>
   )
@@ -115,6 +116,11 @@ const HomeScreen = ({ navigation }) => {
           </LinearGradient>
         </Animatable.View>
 
+        {/* Daily Inspiration */}
+        <Animatable.View animation="fadeIn" delay={900}>
+          <DailyInspiration />
+        </Animatable.View>
+
         {/* Stats Overview */}
         <Animatable.View ref={statsRef} style={styles.section}>
           <Text style={styles.sectionTitle}>Your Growth Journey</Text>
@@ -146,10 +152,10 @@ const HomeScreen = ({ navigation }) => {
             )}
             {renderQuickAction("View Progress", "📊", COLORS.primary.orange, () => navigation.navigate("Profile"))}
             {renderQuickAction(
-              "Inspiration",
-              "💡",
+              "Hobby Features",
+              "🎨",
               COLORS.secondary.gold,
-              () => {}, // Could open inspiration quotes
+              () => navigation.navigate("HobbyFeatures"), // We'll create this screen
             )}
           </View>
         </Animatable.View>

@@ -1,89 +1,78 @@
 "use client"
 
-// 📝 JOURNAL SCREEN - Beautiful writing experience with mood tracking
+// 📝 JOURNAL SCREEN - Beautiful journaling experience
 
 import { useState, useEffect, useRef } from "react"
 import {
   View,
   Text,
+  TextInput,
   StyleSheet,
   ScrollView,
-  TextInput,
   TouchableOpacity,
-  Alert,
-  Modal,
   FlatList,
-  StatusBar,
+  Image,
+  Alert,
+  Keyboard,
+  KeyboardAvoidingView,
+  Platform,
 } from "react-native"
 import { LinearGradient } from "expo-linear-gradient"
 import * as Animatable from "react-native-animatable"
-import { SafeAreaView } from "react-native-safe-area-context"
 import * as ImagePicker from "expo-image-picker"
+import * as Haptics from "expo-haptics"
+import { SafeAreaView } from "react-native-safe-area-context"
 
-import CustomButton from "../../components/common/customButton"
 import { useApp } from "../../context/AppContext"
 import { COLORS } from "../../styles/colors"
 import { TYPOGRAPHY, SPACING, SHADOWS, GLOBAL_STYLES } from "../../styles/globalStyles"
+import CustomButton from "../../components/common/customButton"
+import LoadingSpinner from "../../components/common/LoadingSpinner"
+import EmptyState from "../../components/common/EmptyState"
+import { formatDate } from "../../utils/dateHelpers"
 
-// 🎭 MOOD OPTIONS - Each mood with its personality
+// 😊 MOOD DATA - For tracking emotional state
 const MOODS = [
-  { id: "amazing", emoji: "🤩", label: "Amazing", color: COLORS.secondary.gold },
-  { id: "happy", emoji: "😊", label: "Happy", color: COLORS.status.success },
-  { id: "good", emoji: "🙂", label: "Good", color: COLORS.primary.orange },
-  { id: "okay", emoji: "😐", label: "Okay", color: COLORS.neutral.mediumGray },
-  { id: "sad", emoji: "😢", label: "Sad", color: COLORS.primary.coral },
-  { id: "stressed", emoji: "😰", label: "Stressed", color: COLORS.status.error },
+  { id: "amazing", emoji: "😁", label: "Amazing", color: COLORS.status.success },
+  { id: "good", emoji: "😊", label: "Good", color: COLORS.secondary.gold },
+  { id: "okay", emoji: "😐", label: "Okay", color: COLORS.primary.orange },
+  { id: "sad", emoji: "😔", label: "Sad", color: COLORS.hobbies.writing },
+  { id: "awful", emoji: "😩", label: "Awful", color: COLORS.status.error },
 ]
 
-// 🎯 HOBBY-SPECIFIC PROMPTS - Personalized writing inspiration
-const HOBBY_PROMPTS = {
+// 💡 WRITING PROMPTS - Based on user hobbies
+const WRITING_PROMPTS = {
   art: [
-    "What colors represent your emotions today?",
-    "Describe a piece of art that inspired you recently",
-    "What would you create if you had unlimited supplies?",
-    "How does creating art make you feel?",
+    "What art piece inspired you recently and why?",
+    "Describe a color that represents your mood today.",
+    "If you could create any artwork without limitations, what would it be?",
   ],
   reading: [
     "What book character do you relate to most right now?",
-    "What life lesson did you learn from your recent reading?",
-    "If you could have dinner with any author, who would it be?",
-    "What quote resonated with you today?",
+    "How has a recent book changed your perspective?",
+    "Describe your ideal reading environment.",
   ],
   music: [
-    "What song perfectly describes your mood today?",
-    "How does music help you process emotions?",
-    "What instrument would you love to master?",
-    "Describe a concert or performance that moved you",
+    "What song lyrics speak to you today?",
+    "How does music affect your emotional state?",
+    "Describe a memory strongly tied to a specific song.",
   ],
   sports: [
-    "How did physical activity affect your mental state today?",
-    "What fitness goal are you working towards?",
-    "Describe a moment when you felt truly strong",
-    "How do you motivate yourself during tough workouts?",
+    "How did physical activity impact your wellbeing today?",
+    "What fitness goal are you working toward?",
+    "Describe how movement makes you feel.",
   ],
   writing: [
-    "What story is your heart trying to tell?",
-    "If you could write a letter to your future self, what would you say?",
-    "What words of wisdom would you share with someone struggling?",
-    "Describe a moment that changed your perspective",
+    "What story are you telling yourself today?",
+    "If your day was a chapter in a book, what would the title be?",
+    "Write a six-word memoir for your day.",
   ],
-  cooking: [
-    "What dish brings back your favorite memories?",
-    "How does cooking help you express creativity?",
-    "What meal would you prepare for someone you love?",
-    "Describe the perfect comfort food for today's mood",
-  ],
-  photography: [
-    "What moment did you wish you could capture today?",
-    "How do you see beauty in everyday things?",
-    "What story would your photos tell about this week?",
-    "Describe the perfect lighting for your current mood",
-  ],
-  gardening: [
-    "What does growth mean to you right now?",
-    "How does nurturing plants reflect nurturing yourself?",
-    "What would you plant in your ideal garden?",
-    "How does being in nature affect your wellbeing?",
+  default: [
+    "What made you smile today?",
+    "What's one thing you learned recently?",
+    "Describe something you're looking forward to.",
+    "What's something you're grateful for today?",
+    "Reflect on a challenge you're currently facing.",
   ],
 }
 
@@ -91,99 +80,197 @@ const JournalScreen = ({ navigation, route }) => {
   const { state, actions } = useApp()
   const { entries, selectedHobbies } = state
 
-  // 📝 ENTRY STATE
-  const [isWriting, setIsWriting] = useState(false)
-  const [currentEntry, setCurrentEntry] = useState({
-    title: "",
-    content: "",
-    mood: null,
-    hobbyTags: [],
-    images: [],
-  })
-
-  // 🎭 UI STATE
-  const [showMoodSelector, setShowMoodSelector] = useState(false)
+  // 📝 COMPONENT STATE
+  const [isCreating, setIsCreating] = useState(false)
+  const [isEditing, setIsEditing] = useState(false)
+  const [entryTitle, setEntryTitle] = useState("")
+  const [entryText, setEntryText] = useState("")
+  const [selectedMood, setSelectedMood] = useState(null)
+  const [entryImages, setEntryImages] = useState([])
+  const [currentEntry, setCurrentEntry] = useState(null)
+  const [isLoading, setIsLoading] = useState(false)
+  const [searchQuery, setSearchQuery] = useState("")
   const [showPrompts, setShowPrompts] = useState(false)
-  const [selectedPrompt, setSelectedPrompt] = useState("")
+  const [prompts, setPrompts] = useState([])
 
   // Animation refs
   const headerRef = useRef()
-  const entriesRef = useRef()
+  const formRef = useRef()
+  const listRef = useRef()
 
-  // 🎬 ENTRANCE ANIMATIONS
+  // 🎬 INITIALIZE SCREEN
   useEffect(() => {
-    setTimeout(() => headerRef.current?.fadeInDown(800), 100)
-    setTimeout(() => entriesRef.current?.fadeInUp(800), 300)
-  }, [])
-
-  // 🎯 CHECK FOR NEW ENTRY ACTION
-  useEffect(() => {
+    // Check if we should create a new entry
     if (route.params?.action === "new") {
-      startNewEntry()
+      handleNewEntry()
     }
+
+    // Check if we should edit a specific entry
+    if (route.params?.entryId) {
+      const entry = entries.find((e) => e.id === route.params.entryId)
+      if (entry) {
+        handleEditEntry(entry)
+      }
+    }
+
+    // Generate writing prompts based on user hobbies
+    generatePrompts()
   }, [route.params])
 
-  // ✍️ START NEW ENTRY
-  const startNewEntry = () => {
-    setCurrentEntry({
-      title: "",
-      content: "",
-      mood: null,
-      hobbyTags: [],
-      images: [],
-    })
-    setIsWriting(true)
+  // 💡 GENERATE WRITING PROMPTS
+  const generatePrompts = () => {
+    let allPrompts = [...WRITING_PROMPTS.default]
+
+    // Add hobby-specific prompts
+    if (selectedHobbies && selectedHobbies.length > 0) {
+      selectedHobbies.forEach((hobby) => {
+        if (WRITING_PROMPTS[hobby]) {
+          allPrompts = [...allPrompts, ...WRITING_PROMPTS[hobby]]
+        }
+      })
+    }
+
+    // Shuffle and take 5 prompts
+    const shuffled = allPrompts.sort(() => 0.5 - Math.random())
+    setPrompts(shuffled.slice(0, 5))
   }
 
-  // 💾 SAVE ENTRY
-  const saveEntry = () => {
-    if (!currentEntry.title.trim() && !currentEntry.content.trim()) {
-      Alert.alert("Empty Entry", "Please write something before saving")
+  // 🎯 HANDLE NEW ENTRY
+  const handleNewEntry = () => {
+    setIsCreating(true)
+    setIsEditing(false)
+    setEntryTitle("")
+    setEntryText("")
+    setSelectedMood(MOODS[2]) // Default to "Okay"
+    setEntryImages([])
+    setCurrentEntry(null)
+    setShowPrompts(true)
+
+    // Animate the form in
+    setTimeout(() => {
+      formRef.current?.fadeInUp(500)
+    }, 100)
+  }
+
+  // 🎯 HANDLE EDIT ENTRY
+  const handleEditEntry = (entry) => {
+    setIsCreating(false)
+    setIsEditing(true)
+    setEntryTitle(entry.title)
+    setEntryText(entry.content)
+    setSelectedMood(MOODS.find((m) => m.id === entry.mood) || MOODS[2])
+    setEntryImages(entry.images || [])
+    setCurrentEntry(entry)
+    setShowPrompts(false)
+
+    // Animate the form in
+    setTimeout(() => {
+      formRef.current?.fadeInUp(500)
+    }, 100)
+  }
+
+  // 🎯 HANDLE SAVE ENTRY
+  const handleSaveEntry = () => {
+    if (!entryTitle.trim()) {
+      Alert.alert("Missing Title", "Please add a title for your journal entry.")
       return
     }
 
-    const entryData = {
-      ...currentEntry,
-      title: currentEntry.title.trim() || "Untitled Entry",
-      moodColor: currentEntry.mood?.color || COLORS.neutral.mediumGray,
-      hobbyTags: currentEntry.hobbyTags,
+    if (!entryText.trim()) {
+      Alert.alert("Empty Entry", "Please write something in your journal entry.")
+      return
     }
 
-    actions.addEntry(entryData)
-    setIsWriting(false)
-    setCurrentEntry({ title: "", content: "", mood: null, hobbyTags: [], images: [] })
+    setIsLoading(true)
+    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success)
 
-    Alert.alert("Success", "Your entry has been saved! 🎉")
-  }
+    // Prepare entry data
+    const entryData = {
+      title: entryTitle.trim(),
+      content: entryText.trim(),
+      mood: selectedMood?.id || "okay",
+      moodColor: selectedMood?.color || COLORS.primary.orange,
+      images: entryImages,
+    }
 
-  // 🎭 SELECT MOOD
-  const selectMood = (mood) => {
-    setCurrentEntry({ ...currentEntry, mood })
-    setShowMoodSelector(false)
-  }
-
-  // 🎯 GET HOBBY PROMPTS
-  const getHobbyPrompts = () => {
-    let prompts = []
-    selectedHobbies.forEach((hobby) => {
-      if (HOBBY_PROMPTS[hobby]) {
-        prompts = [...prompts, ...HOBBY_PROMPTS[hobby]]
+    setTimeout(() => {
+      if (isEditing && currentEntry) {
+        // Update existing entry
+        actions.updateEntry({
+          id: currentEntry.id,
+          ...entryData,
+        })
+      } else {
+        // Create new entry
+        actions.addEntry(entryData)
       }
-    })
-    return prompts.length > 0 ? prompts : ["What's on your mind today?", "How are you feeling right now?"]
+
+      // Reset form and state
+      setIsLoading(false)
+      setIsCreating(false)
+      setIsEditing(false)
+      setEntryTitle("")
+      setEntryText("")
+      setSelectedMood(MOODS[2])
+      setEntryImages([])
+      setCurrentEntry(null)
+      setShowPrompts(false)
+
+      // Hide keyboard
+      Keyboard.dismiss()
+    }, 1000)
   }
 
-  // 🎨 USE PROMPT
-  const usePrompt = (prompt) => {
-    setCurrentEntry({ ...currentEntry, content: currentEntry.content + prompt + "\n\n" })
-    setShowPrompts(false)
+  // 🎯 HANDLE CANCEL
+  const handleCancel = () => {
+    if (entryTitle.trim() || entryText.trim()) {
+      Alert.alert("Discard Changes?", "Are you sure you want to discard your changes?", [
+        { text: "Keep Editing", style: "cancel" },
+        {
+          text: "Discard",
+          style: "destructive",
+          onPress: () => {
+            setIsCreating(false)
+            setIsEditing(false)
+            setEntryTitle("")
+            setEntryText("")
+            setSelectedMood(MOODS[2])
+            setEntryImages([])
+            setCurrentEntry(null)
+            setShowPrompts(false)
+            Keyboard.dismiss()
+          },
+        },
+      ])
+    } else {
+      setIsCreating(false)
+      setIsEditing(false)
+      setShowPrompts(false)
+      Keyboard.dismiss()
+    }
   }
 
-  // 📸 ADD IMAGE
-  const addImage = async () => {
-    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync()
-    if (status !== "granted") {
-      Alert.alert("Permission needed", "Please grant camera roll permissions to add images")
+  // 🎯 HANDLE DELETE ENTRY
+  const handleDeleteEntry = (entry) => {
+    Alert.alert("Delete Entry", "Are you sure you want to delete this journal entry? This action cannot be undone.", [
+      { text: "Cancel", style: "cancel" },
+      {
+        text: "Delete",
+        style: "destructive",
+        onPress: () => {
+          Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning)
+          actions.deleteEntry(entry.id)
+        },
+      },
+    ])
+  }
+
+  // 📸 HANDLE IMAGE PICKER
+  const handleAddImage = async () => {
+    const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync()
+
+    if (permissionResult.granted === false) {
+      Alert.alert("Permission Required", "You need to grant access to your photo library to add images.")
       return
     }
 
@@ -191,225 +278,315 @@ const JournalScreen = ({ navigation, route }) => {
       mediaTypes: ImagePicker.MediaTypeOptions.Images,
       allowsEditing: true,
       aspect: [4, 3],
-      quality: 1,
+      quality: 0.8,
     })
 
-    if (!result.canceled) {
-      setCurrentEntry({
-        ...currentEntry,
-        images: [...currentEntry.images, result.assets[0].uri],
-      })
+    if (!result.canceled && result.assets && result.assets.length > 0) {
+      setEntryImages([...entryImages, result.assets[0].uri])
     }
+  }
+
+  // 🎯 HANDLE REMOVE IMAGE
+  const handleRemoveImage = (index) => {
+    const newImages = [...entryImages]
+    newImages.splice(index, 1)
+    setEntryImages(newImages)
+  }
+
+  // 🎯 HANDLE USE PROMPT
+  const handleUsePrompt = (prompt) => {
+    setEntryText((current) => (current ? `${current}\n\n${prompt}:\n` : `${prompt}:\n`))
+    setShowPrompts(false)
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)
+  }
+
+  // 🔍 FILTER ENTRIES
+  const getFilteredEntries = () => {
+    if (!searchQuery.trim()) return entries
+
+    const query = searchQuery.toLowerCase()
+    return entries.filter(
+      (entry) =>
+        entry.title.toLowerCase().includes(query) ||
+        entry.content.toLowerCase().includes(query) ||
+        MOODS.find((m) => m.id === entry.mood)
+          ?.label.toLowerCase()
+          .includes(query),
+    )
   }
 
   // 🎨 RENDER MOOD SELECTOR
   const renderMoodSelector = () => (
-    <Modal visible={showMoodSelector} transparent animationType="slide">
-      <View style={styles.modalOverlay}>
-        <View style={styles.modalContent}>
-          <Text style={styles.modalTitle}>How are you feeling?</Text>
-          <View style={styles.moodGrid}>
-            {MOODS.map((mood) => (
-              <TouchableOpacity
-                key={mood.id}
-                style={[styles.moodOption, { backgroundColor: mood.color + "20" }]}
-                onPress={() => selectMood(mood)}
-              >
-                <Text style={styles.moodEmoji}>{mood.emoji}</Text>
-                <Text style={styles.moodLabel}>{mood.label}</Text>
-              </TouchableOpacity>
-            ))}
-          </View>
-          <CustomButton title="Cancel" onPress={() => setShowMoodSelector(false)} variant="outline" />
-        </View>
-      </View>
-    </Modal>
-  )
-
-  // 💡 RENDER PROMPTS MODAL
-  const renderPromptsModal = () => (
-    <Modal visible={showPrompts} transparent animationType="slide">
-      <View style={styles.modalOverlay}>
-        <View style={styles.modalContent}>
-          <Text style={styles.modalTitle}>Writing Inspiration</Text>
-          <ScrollView style={styles.promptsList}>
-            {getHobbyPrompts().map((prompt, index) => (
-              <TouchableOpacity
-                key={index}
-                style={styles.promptOption}
-                onPress={() => usePrompt(prompt)}
-              >
-                <Text style={styles.promptText}>{prompt}</Text>
-              </TouchableOpacity>
-            ))}
-          </ScrollView>
-          <CustomButton title="Cancel" onPress={() => setShowPrompts(false)} variant="outline" />
-        </View>
-      </View>
-    </Modal>
-  )
-
-  // 📝 RENDER WRITING INTERFACE
-  const renderWritingInterface = () => (
-    <View style={styles.writingContainer}>
-      <ScrollView style={styles.writingScroll} keyboardShouldPersistTaps="handled">
-        {/* Entry Title */}
-        <TextInput
-          style={styles.titleInput}
-          placeholder="Give your entry a title..."
-          placeholderTextColor={COLORS.neutral.mediumGray}
-          value={currentEntry.title}
-          onChangeText={(text) => setCurrentEntry({ ...currentEntry, title: text })}
-          maxLength={100}
-        />
-
-        {/* Mood & Tools Bar */}
-        <View style={styles.toolsBar}>
-          <TouchableOpacity style={styles.toolButton} onPress={() => setShowMoodSelector(true)}>
-            <Text style={styles.toolIcon}>{currentEntry.mood?.emoji || "😊"}</Text>
-            <Text style={styles.toolText}>Mood</Text>
+    <View style={styles.moodContainer}>
+      <Text style={styles.moodLabel}>How are you feeling?</Text>
+      <View style={styles.moodOptions}>
+        {MOODS.map((mood) => (
+          <TouchableOpacity
+            key={mood.id}
+            style={[styles.moodOption, selectedMood?.id === mood.id && styles.moodOptionSelected]}
+            onPress={() => {
+              setSelectedMood(mood)
+              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)
+            }}
+          >
+            <Text style={styles.moodEmoji}>{mood.emoji}</Text>
+            <Text style={[styles.moodText, selectedMood?.id === mood.id && { color: mood.color, fontWeight: "600" }]}>
+              {mood.label}
+            </Text>
           </TouchableOpacity>
-
-          <TouchableOpacity style={styles.toolButton} onPress={() => setShowPrompts(true)}>
-            <Text style={styles.toolIcon}>💡</Text>
-            <Text style={styles.toolText}>Prompts</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity style={styles.toolButton} onPress={addImage}>
-            <Text style={styles.toolIcon}>📸</Text>
-            <Text style={styles.toolText}>Photo</Text>
-          </TouchableOpacity>
-        </View>
-
-        {/* Content Input */}
-        <TextInput
-          style={styles.contentInput}
-          placeholder="Start writing your thoughts..."
-          placeholderTextColor={COLORS.neutral.mediumGray}
-          value={currentEntry.content}
-          onChangeText={(text) => setCurrentEntry({ ...currentEntry, content: text })}
-          multiline
-          textAlignVertical="top"
-        />
-
-        {/* Images Preview */}
-        {currentEntry.images.length > 0 && (
-          <View style={styles.imagesPreview}>
-            {currentEntry.images.map((uri, index) => (
-              <View key={index} style={styles.imageContainer}>
-                <Text style={styles.imagePlaceholder}>📷 Image {index + 1}</Text>
-              </View>
-            ))}
-          </View>
-        )}
-      </ScrollView>
-
-      {/* Action Buttons */}
-      <View style={styles.writingActions}>
-        <CustomButton
-          title="Cancel"
-          onPress={() => setIsWriting(false)}
-          variant="outline"
-          size="medium"
-          style={styles.cancelButton}
-        />
-        <CustomButton title="Save Entry" onPress={saveEntry} variant="success" size="medium" style={styles.saveButton} />
+        ))}
       </View>
     </View>
   )
 
-  // 📖 RENDER ENTRY ITEM
-  const renderEntryItem = ({ item }) => (
-    <Animatable.View animation="fadeInUp" duration={600}>
-      <TouchableOpacity style={styles.entryCard} activeOpacity={0.8}>
-        <LinearGradient
-          colors={[COLORS.neutral.white, COLORS.neutral.lightGray + "50"]}
-          style={styles.entryGradient}
-        >
-          <View style={styles.entryHeader}>
-            <Text style={styles.entryTitle}>{item.title}</Text>
-            <View style={styles.entryMeta}>
-              <Text style={styles.entryMood}>{item.mood?.emoji || "😊"}</Text>
-              <Text style={styles.entryDate}>{new Date(item.createdAt).toLocaleDateString()}</Text>
-            </View>
+  // 🎨 RENDER IMAGE GALLERY
+  const renderImageGallery = () => (
+    <View style={styles.imageGalleryContainer}>
+      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.imageGallery}>
+        {entryImages.map((uri, index) => (
+          <View key={index} style={styles.imageContainer}>
+            <Image source={{ uri }} style={styles.entryImage} />
+            <TouchableOpacity style={styles.removeImageButton} onPress={() => handleRemoveImage(index)}>
+              <Text style={styles.removeImageText}>✕</Text>
+            </TouchableOpacity>
           </View>
-          <Text style={styles.entryPreview} numberOfLines={3}>
-            {item.content}
-          </Text>
-          {item.hobbyTags.length > 0 && (
-            <View style={styles.hobbyTags}>
-              {item.hobbyTags.slice(0, 3).map((tag, index) => (
-                <View key={index} style={[styles.hobbyTag, { backgroundColor: COLORS.hobbies[tag] + "20" }]}>
-                  <Text style={[styles.hobbyTagText, { color: COLORS.hobbies[tag] }]}>{tag}</Text>
-                </View>
-              ))}
-            </View>
-          )}
-        </LinearGradient>
+        ))}
+
+        <TouchableOpacity style={styles.addImageButton} onPress={handleAddImage}>
+          <Text style={styles.addImageIcon}>+</Text>
+          <Text style={styles.addImageText}>Add Photo</Text>
+        </TouchableOpacity>
+      </ScrollView>
+    </View>
+  )
+
+  // 🎨 RENDER WRITING PROMPTS
+  const renderWritingPrompts = () => (
+    <Animatable.View animation="fadeIn" style={styles.promptsContainer}>
+      <View style={styles.promptsHeader}>
+        <Text style={styles.promptsTitle}>Writing Prompts</Text>
+        <TouchableOpacity onPress={() => setShowPrompts(false)}>
+          <Text style={styles.promptsClose}>✕</Text>
+        </TouchableOpacity>
+      </View>
+
+      <ScrollView style={styles.promptsList}>
+        {prompts.map((prompt, index) => (
+          <TouchableOpacity key={index} style={styles.promptItem} onPress={() => handleUsePrompt(prompt)}>
+            <Text style={styles.promptText}>{prompt}</Text>
+            <Text style={styles.promptUse}>Use</Text>
+          </TouchableOpacity>
+        ))}
+      </ScrollView>
+
+      <TouchableOpacity style={styles.refreshPromptsButton} onPress={generatePrompts}>
+        <Text style={styles.refreshPromptsText}>🔄 Refresh Prompts</Text>
       </TouchableOpacity>
     </Animatable.View>
   )
 
-  // 📖 RENDER ENTRIES LIST
-  const renderEntriesList = () => (
-    <View style={styles.entriesContainer}>
-      <View style={styles.entriesHeader}>
-        <Text style={styles.entriesTitle}>Your Journal</Text>
-        <Text style={styles.entriesCount}>{entries.length} entries</Text>
-      </View>
+  // 🎨 RENDER ENTRY FORM
+  const renderEntryForm = () => (
+    <Animatable.View ref={formRef} style={styles.formContainer}>
+      <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : "height"} style={styles.keyboardContainer}>
+        <ScrollView style={styles.formScrollView} keyboardShouldPersistTaps="handled">
+          {/* Title Input */}
+          <TextInput
+            style={styles.titleInput}
+            placeholder="Entry Title"
+            placeholderTextColor={COLORS.neutral.mediumGray}
+            value={entryTitle}
+            onChangeText={setEntryTitle}
+            maxLength={50}
+          />
 
-      {entries.length > 0 ? (
+          {/* Mood Selector */}
+          {renderMoodSelector()}
+
+          {/* Content Input */}
+          <TextInput
+            style={styles.contentInput}
+            placeholder="What's on your mind today?"
+            placeholderTextColor={COLORS.neutral.mediumGray}
+            value={entryText}
+            onChangeText={setEntryText}
+            multiline
+            textAlignVertical="top"
+          />
+
+          {/* Image Gallery */}
+          {renderImageGallery()}
+
+          {/* Action Buttons */}
+          <View style={styles.formActions}>
+            {!isLoading ? (
+              <>
+                <CustomButton
+                  title="Cancel"
+                  onPress={handleCancel}
+                  variant="outline"
+                  size="medium"
+                  style={styles.cancelButton}
+                />
+                <CustomButton
+                  title={isEditing ? "Save Changes" : "Save Entry"}
+                  onPress={handleSaveEntry}
+                  variant={isEditing ? "success" : "primary"}
+                  size="medium"
+                  style={styles.saveButton}
+                />
+              </>
+            ) : (
+              <LoadingSpinner size="large" color={COLORS.primary.coral} />
+            )}
+          </View>
+        </ScrollView>
+      </KeyboardAvoidingView>
+
+      {/* Writing Prompts */}
+      {showPrompts && renderWritingPrompts()}
+
+      {/* Prompt Button */}
+      {!showPrompts && (
+        <TouchableOpacity style={styles.promptButton} onPress={() => setShowPrompts(true)}>
+          <LinearGradient colors={COLORS.gradients.dream} style={styles.promptButtonGradient}>
+            <Text style={styles.promptButtonText}>💡 Need inspiration?</Text>
+          </LinearGradient>
+        </TouchableOpacity>
+      )}
+    </Animatable.View>
+  )
+
+  // 🎨 RENDER ENTRY ITEM
+  const renderEntryItem = ({ item }) => {
+    const mood = MOODS.find((m) => m.id === item.mood) || MOODS[2]
+    const date = formatDate(new Date(item.createdAt))
+
+    return (
+      <Animatable.View animation="fadeIn" duration={500} style={styles.entryItem}>
+        <TouchableOpacity style={styles.entryCard} onPress={() => handleEditEntry(item)} activeOpacity={0.8}>
+          {/* Entry Header */}
+          <View style={styles.entryHeader}>
+            <View style={styles.entryMeta}>
+              <Text style={styles.entryDate}>{date}</Text>
+              <View style={styles.entryMoodContainer}>
+                <Text style={styles.entryMoodEmoji}>{mood.emoji}</Text>
+                <Text style={[styles.entryMoodText, { color: mood.color }]}>{mood.label}</Text>
+              </View>
+            </View>
+
+            <TouchableOpacity
+              style={styles.entryDeleteButton}
+              onPress={() => handleDeleteEntry(item)}
+              hitSlop={{ top: 10, right: 10, bottom: 10, left: 10 }}
+            >
+              <Text style={styles.entryDeleteText}>🗑️</Text>
+            </TouchableOpacity>
+          </View>
+
+          {/* Entry Content */}
+          <Text style={styles.entryTitle}>{item.title}</Text>
+          <Text style={styles.entryContent} numberOfLines={3}>
+            {item.content}
+          </Text>
+
+          {/* Entry Images */}
+          {item.images && item.images.length > 0 && (
+            <View style={styles.entryImagesPreview}>
+              {item.images.slice(0, 3).map((uri, index) => (
+                <Image key={index} source={{ uri }} style={styles.entryImageThumbnail} />
+              ))}
+              {item.images.length > 3 && (
+                <View style={styles.moreImagesIndicator}>
+                  <Text style={styles.moreImagesText}>+{item.images.length - 3}</Text>
+                </View>
+              )}
+            </View>
+          )}
+        </TouchableOpacity>
+      </Animatable.View>
+    )
+  }
+
+  // 🎨 RENDER ENTRIES LIST
+  const renderEntriesList = () => {
+    const filteredEntries = getFilteredEntries()
+
+    if (filteredEntries.length === 0) {
+      return (
+        <EmptyState
+          icon="📝"
+          title="No Journal Entries Yet"
+          message={
+            searchQuery
+              ? "No entries match your search. Try different keywords."
+              : "Start documenting your thoughts and experiences."
+          }
+          actionLabel={searchQuery ? "Clear Search" : "Write First Entry"}
+          onAction={searchQuery ? () => setSearchQuery("") : handleNewEntry}
+        />
+      )
+    }
+
+    return (
+      <Animatable.View ref={listRef} style={styles.entriesListContainer}>
         <FlatList
-          data={entries}
+          data={filteredEntries}
           renderItem={renderEntryItem}
           keyExtractor={(item) => item.id}
           showsVerticalScrollIndicator={false}
           contentContainerStyle={styles.entriesList}
         />
-      ) : (
-        <View style={styles.emptyState}>
-          <Text style={styles.emptyStateIcon}>📝</Text>
-          <Text style={styles.emptyStateTitle}>Your Journal Awaits</Text>
-          <Text style={styles.emptyStateText}>Start documenting your growth journey with your first entry</Text>
-        </View>
-      )}
-    </View>
-  )
-
-  if (isWriting) {
-    return (
-      <SafeAreaView style={styles.container}>
-        <StatusBar barStyle="dark-content" backgroundColor={COLORS.neutral.white} />
-        {renderWritingInterface()}
-        {renderMoodSelector()}
-        {renderPromptsModal()}
-      </SafeAreaView>
+      </Animatable.View>
     )
   }
 
+  // 🎨 RENDER MAIN SCREEN
   return (
     <SafeAreaView style={styles.container}>
-      <StatusBar barStyle="light-content" backgroundColor={COLORS.primary.coral} />
-
-      {/* Beautiful Header */}
-      <Animatable.View ref={headerRef}>
-        <LinearGradient colors={COLORS.gradients.sunrise} style={styles.header}>
+      {/* Header */}
+      <Animatable.View ref={headerRef} animation="fadeInDown" duration={500} style={styles.header}>
+        <LinearGradient
+          colors={COLORS.gradients.sunrise}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 0 }}
+          style={styles.headerGradient}
+        >
           <Text style={styles.headerTitle}>Journal</Text>
-          <Text style={styles.headerSubtitle}>Capture your thoughts and growth</Text>
+
+          {/* Search Bar */}
+          {!isCreating && !isEditing && (
+            <View style={styles.searchContainer}>
+              <TextInput
+                style={styles.searchInput}
+                placeholder="Search entries..."
+                placeholderTextColor={COLORS.neutral.white + "99"}
+                value={searchQuery}
+                onChangeText={setSearchQuery}
+              />
+              {searchQuery ? (
+                <TouchableOpacity style={styles.searchClear} onPress={() => setSearchQuery("")}>
+                  <Text style={styles.searchClearText}>✕</Text>
+                </TouchableOpacity>
+              ) : (
+                <Text style={styles.searchIcon}>🔍</Text>
+              )}
+            </View>
+          )}
         </LinearGradient>
       </Animatable.View>
+
+      {/* Content */}
+      <View style={styles.content}>{isCreating || isEditing ? renderEntryForm() : renderEntriesList()}</View>
 
       {/* Floating Action Button */}
-      <TouchableOpacity style={styles.fab} onPress={startNewEntry} activeOpacity={0.8}>
-        <LinearGradient colors={COLORS.gradients.success} style={styles.fabGradient}>
-          <Text style={styles.fabIcon}>✍️</Text>
-        </LinearGradient>
-      </TouchableOpacity>
-
-      {/* Entries List */}
-      <Animatable.View ref={entriesRef} style={styles.content}>
-        {renderEntriesList()}
-      </Animatable.View>
+      {!isCreating && !isEditing && (
+        <TouchableOpacity style={styles.fab} onPress={handleNewEntry} activeOpacity={0.8}>
+          <LinearGradient colors={COLORS.gradients.sunrise} style={styles.fabGradient}>
+            <Text style={styles.fabIcon}>+</Text>
+          </LinearGradient>
+        </TouchableOpacity>
+      )}
     </SafeAreaView>
   )
 }
@@ -420,109 +597,251 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.neutral.white,
   },
   header: {
+    width: "100%",
+  },
+  headerGradient: {
     paddingHorizontal: SPACING.lg,
-    paddingVertical: SPACING.xl,
-    borderBottomLeftRadius: 25,
-    borderBottomRightRadius: 25,
+    paddingVertical: SPACING.lg,
+    borderBottomLeftRadius: 20,
+    borderBottomRightRadius: 20,
   },
   headerTitle: {
-    ...TYPOGRAPHY.h1,
+    ...TYPOGRAPHY.h2,
     color: COLORS.neutral.white,
-    marginBottom: SPACING.xs,
+    marginBottom: SPACING.md,
   },
-  headerSubtitle: {
+  searchContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: COLORS.neutral.white + "33",
+    borderRadius: 12,
+    paddingHorizontal: SPACING.md,
+  },
+  searchInput: {
+    flex: 1,
+    height: 40,
+    color: COLORS.neutral.white,
     ...TYPOGRAPHY.body,
-    color: COLORS.neutral.white + "CC",
+  },
+  searchIcon: {
+    fontSize: 16,
+    color: COLORS.neutral.white + "99",
+  },
+  searchClear: {
+    padding: SPACING.xs,
+  },
+  searchClearText: {
+    fontSize: 16,
+    color: COLORS.neutral.white,
   },
   content: {
     flex: 1,
-    paddingTop: SPACING.lg,
+  },
+  entriesListContainer: {
+    flex: 1,
+  },
+  entriesList: {
+    padding: SPACING.md,
+    paddingBottom: SPACING.xxl,
+  },
+  entryItem: {
+    marginBottom: SPACING.md,
+  },
+  entryCard: {
+    ...GLOBAL_STYLES.card,
+    borderRadius: 12,
+  },
+  entryHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "flex-start",
+    marginBottom: SPACING.sm,
+  },
+  entryMeta: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  entryDate: {
+    ...TYPOGRAPHY.caption,
+    color: COLORS.neutral.mediumGray,
+    marginRight: SPACING.md,
+  },
+  entryMoodContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  entryMoodEmoji: {
+    fontSize: 16,
+    marginRight: SPACING.xs,
+  },
+  entryMoodText: {
+    ...TYPOGRAPHY.caption,
+    fontWeight: "600",
+  },
+  entryDeleteButton: {
+    padding: SPACING.xs,
+  },
+  entryDeleteText: {
+    fontSize: 16,
+  },
+  entryTitle: {
+    ...TYPOGRAPHY.h3,
+    marginBottom: SPACING.sm,
+  },
+  entryContent: {
+    ...TYPOGRAPHY.body,
+    color: COLORS.neutral.darkGray,
+  },
+  entryImagesPreview: {
+    flexDirection: "row",
+    marginTop: SPACING.md,
+  },
+  entryImageThumbnail: {
+    width: 60,
+    height: 60,
+    borderRadius: 8,
+    marginRight: SPACING.sm,
+  },
+  moreImagesIndicator: {
+    width: 60,
+    height: 60,
+    borderRadius: 8,
+    backgroundColor: COLORS.neutral.lightGray,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  moreImagesText: {
+    ...TYPOGRAPHY.body,
+    fontWeight: "600",
+    color: COLORS.neutral.darkGray,
   },
   fab: {
     position: "absolute",
-    bottom: 100,
+    bottom: SPACING.xl,
     right: SPACING.lg,
-    zIndex: 1000,
-    borderRadius: 28,
     ...SHADOWS.heavy,
   },
   fabGradient: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
+    width: 60,
+    height: 60,
+    borderRadius: 30,
     alignItems: "center",
     justifyContent: "center",
   },
   fabIcon: {
-    fontSize: 24,
+    fontSize: 32,
+    color: COLORS.neutral.white,
+    fontWeight: "bold",
   },
-  writingContainer: {
+  formContainer: {
     flex: 1,
-    backgroundColor: COLORS.neutral.white,
   },
-  writingScroll: {
+  keyboardContainer: {
+    flex: 1,
+  },
+  formScrollView: {
     flex: 1,
     padding: SPACING.lg,
   },
   titleInput: {
-    ...TYPOGRAPHY.h2,
-    color: COLORS.neutral.black,
-    borderBottomWidth: 2,
-    borderBottomColor: COLORS.neutral.lightGray,
-    paddingVertical: SPACING.md,
+    ...GLOBAL_STYLES.input,
+    ...TYPOGRAPHY.h3,
     marginBottom: SPACING.lg,
   },
-  toolsBar: {
+  moodContainer: {
+    marginBottom: SPACING.lg,
+  },
+  moodLabel: {
+    ...TYPOGRAPHY.body,
+    fontWeight: "600",
+    marginBottom: SPACING.sm,
+  },
+  moodOptions: {
     flexDirection: "row",
-    justifyContent: "space-around",
-    paddingVertical: SPACING.md,
-    marginBottom: SPACING.lg,
-    backgroundColor: COLORS.neutral.lightGray,
-    borderRadius: 12,
+    justifyContent: "space-between",
   },
-  toolButton: {
+  moodOption: {
     alignItems: "center",
     padding: SPACING.sm,
+    borderRadius: 12,
+    backgroundColor: COLORS.neutral.lightGray,
+    width: "18%",
   },
-  toolIcon: {
+  moodOptionSelected: {
+    backgroundColor: COLORS.neutral.white,
+    ...SHADOWS.light,
+  },
+  moodEmoji: {
     fontSize: 24,
     marginBottom: SPACING.xs,
   },
-  toolText: {
+  moodText: {
+    ...TYPOGRAPHY.caption,
+    textAlign: "center",
+  },
+  contentInput: {
+    ...GLOBAL_STYLES.input,
+    ...TYPOGRAPHY.body,
+    height: 200,
+    textAlignVertical: "top",
+    marginBottom: SPACING.lg,
+  },
+  imageGalleryContainer: {
+    marginBottom: SPACING.lg,
+  },
+  imageGallery: {
+    paddingBottom: SPACING.sm,
+  },
+  imageContainer: {
+    marginRight: SPACING.sm,
+    position: "relative",
+  },
+  entryImage: {
+    width: 100,
+    height: 100,
+    borderRadius: 8,
+  },
+  removeImageButton: {
+    position: "absolute",
+    top: -8,
+    right: -8,
+    backgroundColor: COLORS.status.error,
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    alignItems: "center",
+    justifyContent: "center",
+    ...SHADOWS.light,
+  },
+  removeImageText: {
+    color: COLORS.neutral.white,
+    fontSize: 12,
+    fontWeight: "bold",
+  },
+  addImageButton: {
+    width: 100,
+    height: 100,
+    borderRadius: 8,
+    backgroundColor: COLORS.neutral.lightGray,
+    alignItems: "center",
+    justifyContent: "center",
+    borderWidth: 1,
+    borderColor: COLORS.neutral.mediumGray,
+    borderStyle: "dashed",
+  },
+  addImageIcon: {
+    fontSize: 24,
+    color: COLORS.neutral.darkGray,
+    marginBottom: SPACING.xs,
+  },
+  addImageText: {
     ...TYPOGRAPHY.caption,
     color: COLORS.neutral.darkGray,
   },
-  contentInput: {
-    ...TYPOGRAPHY.body,
-    color: COLORS.neutral.black,
-    minHeight: 300,
-    textAlignVertical: "top",
-    lineHeight: 24,
-  },
-  imagesPreview: {
+  formActions: {
     flexDirection: "row",
-    flexWrap: "wrap",
-    marginTop: SPACING.lg,
-  },
-  imageContainer: {
-    width: 80,
-    height: 80,
-    backgroundColor: COLORS.neutral.lightGray,
-    borderRadius: 8,
-    alignItems: "center",
-    justifyContent: "center",
-    marginRight: SPACING.sm,
-    marginBottom: SPACING.sm,
-  },
-  imagePlaceholder: {
-    fontSize: 12,
-    color: COLORS.neutral.mediumGray,
-  },
-  writingActions: {
-    flexDirection: "row",
-    padding: SPACING.lg,
-    borderTopWidth: 1,
-    borderTopColor: COLORS.neutral.lightGray,
+    justifyContent: "space-between",
+    marginBottom: SPACING.xl,
   },
   cancelButton: {
     flex: 1,
@@ -532,153 +851,77 @@ const styles = StyleSheet.create({
     flex: 1,
     marginLeft: SPACING.sm,
   },
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: "rgba(0,0,0,0.5)",
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  modalContent: {
-    backgroundColor: COLORS.neutral.white,
-    borderRadius: 20,
-    padding: SPACING.lg,
-    margin: SPACING.lg,
-    maxHeight: "80%",
-    width: "90%",
-  },
-  modalTitle: {
-    ...TYPOGRAPHY.h2,
-    textAlign: "center",
-    marginBottom: SPACING.lg,
-  },
-  moodGrid: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    justifyContent: "space-between",
-    marginBottom: SPACING.lg,
-  },
-  moodOption: {
-    width: "30%",
-    aspectRatio: 1,
+  promptButton: {
+    position: "absolute",
+    bottom: SPACING.xl,
+    left: SPACING.lg,
+    right: SPACING.lg,
+    ...SHADOWS.medium,
     borderRadius: 12,
+    overflow: "hidden",
+  },
+  promptButtonGradient: {
+    paddingVertical: SPACING.md,
     alignItems: "center",
-    justifyContent: "center",
-    marginBottom: SPACING.sm,
   },
-  moodEmoji: {
-    fontSize: 24,
-    marginBottom: SPACING.xs,
+  promptButtonText: {
+    ...TYPOGRAPHY.button,
+    color: COLORS.neutral.white,
   },
-  moodLabel: {
-    ...TYPOGRAPHY.caption,
-    fontWeight: "600",
+  promptsContainer: {
+    position: "absolute",
+    bottom: 0,
+    left: 0,
+    right: 0,
+    backgroundColor: COLORS.neutral.white,
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    padding: SPACING.lg,
+    ...SHADOWS.heavy,
+    maxHeight: "60%",
+  },
+  promptsHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: SPACING.md,
+  },
+  promptsTitle: {
+    ...TYPOGRAPHY.h3,
+  },
+  promptsClose: {
+    fontSize: 20,
+    color: COLORS.neutral.darkGray,
   },
   promptsList: {
     maxHeight: 300,
-    marginBottom: SPACING.lg,
   },
-  promptOption: {
-    padding: SPACING.md,
-    backgroundColor: COLORS.neutral.lightGray,
-    borderRadius: 8,
-    marginBottom: SPACING.sm,
+  promptItem: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    paddingVertical: SPACING.md,
+    borderBottomWidth: 1,
+    borderBottomColor: COLORS.neutral.lightGray,
   },
   promptText: {
     ...TYPOGRAPHY.body,
-    color: COLORS.neutral.black,
-  },
-  entriesContainer: {
     flex: 1,
-    paddingHorizontal: SPACING.lg,
+    paddingRight: SPACING.md,
   },
-  entriesHeader: {
-    flexDirection: "row",
-    justifyContent: "space-between",
+  promptUse: {
+    ...TYPOGRAPHY.button,
+    color: COLORS.primary.coral,
+  },
+  refreshPromptsButton: {
     alignItems: "center",
-    marginBottom: SPACING.lg,
+    marginTop: SPACING.md,
+    paddingVertical: SPACING.sm,
   },
-  entriesTitle: {
-    ...TYPOGRAPHY.h2,
-    color: COLORS.neutral.black,
-  },
-  entriesCount: {
-    ...TYPOGRAPHY.caption,
-    color: COLORS.neutral.mediumGray,
-  },
-  entriesList: {
-    paddingBottom: 100,
-  },
-  entryCard: {
-    marginBottom: SPACING.md,
-    borderRadius: 16,
-    overflow: "hidden",
-  },
-  entryGradient: {
-    padding: SPACING.lg,
-    ...SHADOWS.light,
-  },
-  entryHeader: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "flex-start",
-    marginBottom: SPACING.sm,
-  },
-  entryTitle: {
-    ...TYPOGRAPHY.h3,
-    flex: 1,
-    marginRight: SPACING.sm,
-  },
-  entryMeta: {
-    alignItems: "flex-end",
-  },
-  entryMood: {
-    fontSize: 20,
-    marginBottom: SPACING.xs,
-  },
-  entryDate: {
-    ...TYPOGRAPHY.caption,
-    color: COLORS.neutral.mediumGray,
-  },
-  entryPreview: {
-    ...TYPOGRAPHY.body,
-    color: COLORS.neutral.darkGray,
-    marginBottom: SPACING.sm,
-  },
-  hobbyTags: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-  },
-  hobbyTag: {
-    paddingHorizontal: SPACING.sm,
-    paddingVertical: SPACING.xs,
-    borderRadius: 12,
-    marginRight: SPACING.xs,
-    marginBottom: SPACING.xs,
-  },
-  hobbyTagText: {
-    ...TYPOGRAPHY.caption,
+  refreshPromptsText: {
+    ...TYPOGRAPHY.bodySmall,
+    color: COLORS.primary.coral,
     fontWeight: "600",
-    textTransform: "capitalize",
-  },
-  emptyState: {
-    flex: 1,
-    alignItems: "center",
-    justifyContent: "center",
-    paddingVertical: SPACING.xxl,
-  },
-  emptyStateIcon: {
-    fontSize: 64,
-    marginBottom: SPACING.lg,
-  },
-  emptyStateTitle: {
-    ...TYPOGRAPHY.h2,
-    marginBottom: SPACING.sm,
-  },
-  emptyStateText: {
-    ...TYPOGRAPHY.body,
-    color: COLORS.neutral.darkGray,
-    textAlign: "center",
-    paddingHorizontal: SPACING.lg,
   },
 })
 
