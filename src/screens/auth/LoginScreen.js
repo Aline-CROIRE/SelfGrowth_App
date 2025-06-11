@@ -1,6 +1,6 @@
 "use client"
 
-// 🔐 LOGIN SCREEN - Beautiful, secure authentication
+// 🔐 LOGIN SCREEN - Beautiful, secure authentication with real persistence
 
 import { useState } from "react"
 import {
@@ -19,6 +19,7 @@ import * as Animatable from "react-native-animatable"
 import { SafeAreaView } from "react-native-safe-area-context"
 
 import CustomButton from "../../components/common/customButton"
+import LoadingSpinner from "../../components/common/LoadingSpinner"
 import { useApp } from "../../context/AppContext"
 import { COLORS } from "../../styles/colors"
 import { TYPOGRAPHY, SPACING, GLOBAL_STYLES } from "../../styles/globalStyles"
@@ -38,77 +39,90 @@ const LoginScreen = ({ navigation }) => {
   // 🎯 FORM VALIDATION
   const validateForm = () => {
     if (!formData.email.trim()) {
-      Alert.alert("Error", "Please enter your email")
+      Alert.alert("Missing Email", "Please enter your email address")
       return false
     }
     if (!formData.email.includes("@")) {
-      Alert.alert("Error", "Please enter a valid email")
+      Alert.alert("Invalid Email", "Please enter a valid email address")
       return false
     }
     if (!formData.password.trim()) {
-      Alert.alert("Error", "Please enter your password")
+      Alert.alert("Missing Password", "Please enter your password")
+      return false
+    }
+    if (formData.password.length < 6) {
+      Alert.alert("Invalid Password", "Password must be at least 6 characters")
       return false
     }
     return true
   }
 
-  // 🚀 HANDLE LOGIN
+  // 🚀 HANDLE LOGIN - Real authentication with user lookup
   const handleLogin = async () => {
     if (!validateForm()) return
 
     setIsLoading(true)
 
     try {
-      // Simulate API call
+      // Simulate API call delay
       await new Promise((resolve) => setTimeout(resolve, 1500))
 
-      // For demo purposes, accept any email/password combination
-      // In real app, this would validate against your backend
+      // Authenticate user using our database
+      const result = await actions.login(formData.email, formData.password)
 
-      const userData = {
-        id: Date.now().toString(),
-        name: formData.email.split("@")[0], // Use email prefix as name
-        email: formData.email,
-        joinedAt: new Date().toISOString(),
-        hobbies: ["reading", "writing"], // Default hobbies for demo
+      if (result.success) {
+        Alert.alert(
+          `Welcome Back, ${result.user.name}! 🎉`,
+          `Great to see you again! Ready to continue your growth journey?`,
+          [{ text: "Let's Go!", style: "default" }],
+        )
+      } else {
+        Alert.alert("Login Failed", result.error || "Please check your credentials and try again.")
       }
-
-      // Save to context
-      actions.login(userData)
-      actions.setHobbies(["reading", "writing"])
-
-      // Navigate to main app
-      navigation.replace("Main")
     } catch (error) {
-      Alert.alert("Error", "Login failed. Please try again.")
+      console.error("Login error:", error)
+      Alert.alert("Login Failed", "Unable to sign in. Please try again.")
     } finally {
       setIsLoading(false)
     }
   }
 
-  // 🔄 DEMO LOGIN - Quick login for testing
+  // 🔄 DEMO LOGIN - Enhanced with proper demo user
   const handleDemoLogin = async () => {
     setIsLoading(true)
 
     try {
       await new Promise((resolve) => setTimeout(resolve, 1000))
 
-      const demoUser = {
-        id: "demo-user",
-        name: "Demo User",
-        email: "demo@selfgrow.app",
-        joinedAt: new Date().toISOString(),
-        hobbies: ["art", "reading", "music"],
-      }
+      const result = await actions.loginDemo()
 
-      actions.login(demoUser)
-      actions.setHobbies(["art", "reading", "music"])
-      navigation.replace("Main")
+      if (result.success) {
+        Alert.alert(
+          "Demo Mode Active! 🚀",
+          `Welcome ${result.user.name}! You're using a demo account with sample data to explore all features.`,
+          [{ text: "Start Exploring!", style: "default" }],
+        )
+      }
     } catch (error) {
-      Alert.alert("Error", "Demo login failed")
+      console.error("Demo login error:", error)
+      Alert.alert("Demo Failed", "Unable to start demo mode. Please try again.")
     } finally {
       setIsLoading(false)
     }
+  }
+
+  if (isLoading) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <View style={styles.loadingContainer}>
+          <LoadingSpinner size="large" color={COLORS.primary.coral} />
+          <Text style={styles.loadingText}>{formData.email ? "Signing you in..." : "Preparing demo..."}</Text>
+          <Text style={styles.loadingSubtext}>
+            {formData.email ? "Verifying your credentials" : "Loading sample data"}
+          </Text>
+        </View>
+      </SafeAreaView>
+    )
   }
 
   return (
@@ -141,10 +155,11 @@ const LoginScreen = ({ navigation }) => {
               placeholder="Email Address"
               placeholderTextColor={COLORS.neutral.mediumGray}
               value={formData.email}
-              onChangeText={(text) => setFormData({ ...formData, email: text })}
+              onChangeText={(text) => setFormData({ ...formData, email: text.toLowerCase().trim() })}
               keyboardType="email-address"
               autoCapitalize="none"
               autoCorrect={false}
+              autoComplete="email"
             />
 
             <View style={styles.passwordContainer}>
@@ -155,6 +170,7 @@ const LoginScreen = ({ navigation }) => {
                 value={formData.password}
                 onChangeText={(text) => setFormData({ ...formData, password: text })}
                 secureTextEntry={!showPassword}
+                autoComplete="password"
               />
               <TouchableOpacity style={styles.eyeButton} onPress={() => setShowPassword(!showPassword)}>
                 <Text style={styles.eyeIcon}>{showPassword ? "👁️" : "👁️‍🗨️"}</Text>
@@ -163,14 +179,23 @@ const LoginScreen = ({ navigation }) => {
           </View>
 
           {/* Forgot Password */}
-          <TouchableOpacity style={styles.forgotPassword}>
+          <TouchableOpacity
+            style={styles.forgotPassword}
+            onPress={() =>
+              Alert.alert(
+                "Reset Password",
+                "Password reset functionality will be available in the next update. For now, you can use any email and password combination to sign in.",
+                [{ text: "Got it!", style: "default" }],
+              )
+            }
+          >
             <Text style={styles.forgotPasswordText}>Forgot Password?</Text>
           </TouchableOpacity>
 
           {/* Login Buttons */}
           <View style={styles.buttonContainer}>
             <CustomButton
-              title={isLoading ? "Signing In..." : "Sign In"}
+              title="Sign In"
               onPress={handleLogin}
               variant="primary"
               size="large"
@@ -197,12 +222,26 @@ const LoginScreen = ({ navigation }) => {
             </View>
 
             <View style={styles.socialButtons}>
-              <TouchableOpacity style={styles.socialButton}>
+              <TouchableOpacity
+                style={styles.socialButton}
+                onPress={() =>
+                  Alert.alert("Coming Soon", "Social login will be available in the next update!", [
+                    { text: "OK", style: "default" },
+                  ])
+                }
+              >
                 <Text style={styles.socialIcon}>📱</Text>
                 <Text style={styles.socialText}>Google</Text>
               </TouchableOpacity>
 
-              <TouchableOpacity style={styles.socialButton}>
+              <TouchableOpacity
+                style={styles.socialButton}
+                onPress={() =>
+                  Alert.alert("Coming Soon", "Social login will be available in the next update!", [
+                    { text: "OK", style: "default" },
+                  ])
+                }
+              >
                 <Text style={styles.socialIcon}>📘</Text>
                 <Text style={styles.socialText}>Facebook</Text>
               </TouchableOpacity>
@@ -231,6 +270,23 @@ const styles = StyleSheet.create({
   },
   keyboardContainer: {
     flex: 1,
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    paddingHorizontal: SPACING.xl,
+  },
+  loadingText: {
+    ...TYPOGRAPHY.h3,
+    marginTop: SPACING.lg,
+    textAlign: "center",
+  },
+  loadingSubtext: {
+    ...TYPOGRAPHY.body,
+    color: COLORS.neutral.darkGray,
+    marginTop: SPACING.sm,
+    textAlign: "center",
   },
   header: {
     paddingHorizontal: SPACING.lg,

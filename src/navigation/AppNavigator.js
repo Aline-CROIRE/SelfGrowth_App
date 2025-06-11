@@ -1,7 +1,8 @@
 import { NavigationContainer } from "@react-navigation/native"
 import { createStackNavigator } from "@react-navigation/stack"
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs"
-import {Text} from "react-native"
+import { Text } from "react-native"
+
 // Import Screens
 import WelcomeScreen from "../screens/auth/WelcomeScreen"
 import LoginScreen from "../screens/auth/LoginScreen"
@@ -10,6 +11,7 @@ import HomeScreen from "../screens/main/HomeScreen"
 import JournalScreen from "../screens/main/JournalScreen"
 import GoalsScreen from "../screens/main/GoalScreen"
 import ProfileScreen from "../screens/main/ProfileScreen"
+import HobbyFeaturesScreen from "../screens/main/HobbyFeatureScreen"
 
 // Import Context
 import { useApp } from "../context/AppContext"
@@ -19,6 +21,17 @@ const Stack = createStackNavigator()
 const Tab = createBottomTabNavigator()
 
 // 🏠 MAIN TAB NAVIGATOR - Beautiful bottom navigation
+const HomeStack = createStackNavigator()
+
+const HomeStackNavigator = () => {
+  return (
+    <HomeStack.Navigator screenOptions={{ headerShown: false }}>
+      <HomeStack.Screen name="HomeMain" component={HomeScreen} />
+      <HomeStack.Screen name="HobbyFeatures" component={HobbyFeaturesScreen} />
+    </HomeStack.Navigator>
+  )
+}
+
 const MainTabNavigator = () => {
   return (
     <Tab.Navigator
@@ -43,7 +56,7 @@ const MainTabNavigator = () => {
     >
       <Tab.Screen
         name="Home"
-        component={HomeScreen}
+        component={HomeStackNavigator}
         options={{
           tabBarIcon: ({ color, size }) => <Text style={{ fontSize: size, color }}>🏠</Text>,
         }}
@@ -107,15 +120,7 @@ const AppNavigator = () => {
   const { state } = useApp()
 
   return (
-    <NavigationContainer>
-      <Stack.Navigator screenOptions={{ headerShown: false }}>
-        {state.isAuthenticated ? (
-          <Stack.Screen name="Main" component={MainTabNavigator} />
-        ) : (
-          <Stack.Screen name="Auth" component={AuthStackNavigator} />
-        )}
-      </Stack.Navigator>
-    </NavigationContainer>
+    <NavigationContainer>{state.isAuthenticated ? <MainTabNavigator /> : <AuthStackNavigator />}</NavigationContainer>
   )
 }
 

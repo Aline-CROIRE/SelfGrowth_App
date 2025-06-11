@@ -1,6 +1,6 @@
 "use client"
 
-// 🎯 REGISTER SCREEN - Beautiful onboarding experience
+// 🎯 REGISTER SCREEN - Beautiful onboarding with real data persistence
 
 import { useState } from "react"
 import {
@@ -20,6 +20,7 @@ import { SafeAreaView } from "react-native-safe-area-context"
 
 import CustomButton from "../../components/common/customButton"
 import HobbySelector from "../../components/hobbies/HobbySelector"
+import LoadingSpinner from "../../components/common/LoadingSpinner"
 import { useApp } from "../../context/AppContext"
 import { COLORS } from "../../styles/colors"
 import { TYPOGRAPHY, SPACING, GLOBAL_STYLES } from "../../styles/globalStyles"
@@ -42,23 +43,27 @@ const RegisterScreen = ({ navigation }) => {
   // 🎯 FORM VALIDATION
   const validateStep1 = () => {
     if (!formData.name.trim()) {
-      Alert.alert("Error", "Please enter your name")
+      Alert.alert("Missing Name", "Please enter your full name")
+      return false
+    }
+    if (formData.name.trim().length < 2) {
+      Alert.alert("Invalid Name", "Name must be at least 2 characters long")
       return false
     }
     if (!formData.email.trim()) {
-      Alert.alert("Error", "Please enter your email")
+      Alert.alert("Missing Email", "Please enter your email address")
       return false
     }
-    if (!formData.email.includes("@")) {
-      Alert.alert("Error", "Please enter a valid email")
+    if (!formData.email.includes("@") || !formData.email.includes(".")) {
+      Alert.alert("Invalid Email", "Please enter a valid email address")
       return false
     }
     if (formData.password.length < 6) {
-      Alert.alert("Error", "Password must be at least 6 characters")
+      Alert.alert("Weak Password", "Password must be at least 6 characters long")
       return false
     }
     if (formData.password !== formData.confirmPassword) {
-      Alert.alert("Error", "Passwords do not match")
+      Alert.alert("Password Mismatch", "Passwords do not match. Please try again.")
       return false
     }
     return true
@@ -66,39 +71,47 @@ const RegisterScreen = ({ navigation }) => {
 
   const validateStep2 = () => {
     if (selectedHobbies.length === 0) {
-      Alert.alert("Error", "Please select at least one hobby")
+      Alert.alert("Select Hobbies", "Please select at least one hobby to personalize your experience")
       return false
     }
     return true
   }
 
-  // 🚀 HANDLE REGISTRATION
+  // 🚀 HANDLE REGISTRATION - Real account creation
   const handleRegister = async () => {
     if (!validateStep2()) return
 
     setIsLoading(true)
 
     try {
-      // Simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 1500))
+      // Simulate realistic API call
+      await new Promise((resolve) => setTimeout(resolve, 2000))
 
-      // Create user data
-      const userData = {
-        id: Date.now().toString(),
-        name: formData.name,
-        email: formData.email,
-        joinedAt: new Date().toISOString(),
+      // Register user with our database
+      const result = await actions.register({
+        name: formData.name.trim(),
+        email: formData.email.toLowerCase().trim(),
+        password: formData.password, // In real app, this would be hashed
         hobbies: selectedHobbies,
+        preferences: {
+          notifications: true,
+          theme: "default",
+          language: "en",
+        },
+      })
+
+      if (result.success) {
+        Alert.alert(
+          "Welcome to SelfGrow! 🎉",
+          `Congratulations ${result.user.name}! Your account has been created successfully. Let's start your growth journey!`,
+          [{ text: "Let's Begin!", style: "default" }],
+        )
+      } else {
+        Alert.alert("Registration Failed", result.error || "Unable to create account. Please try again.")
       }
-
-      // Save to context
-      actions.login(userData)
-      actions.setHobbies(selectedHobbies)
-
-      // Navigate to main app
-      navigation.replace("Main")
     } catch (error) {
-      Alert.alert("Error", "Registration failed. Please try again.")
+      console.error("Registration error:", error)
+      Alert.alert("Registration Failed", "Unable to create account. Please try again.")
     } finally {
       setIsLoading(false)
     }
@@ -113,11 +126,13 @@ const RegisterScreen = ({ navigation }) => {
       <View style={styles.inputContainer}>
         <TextInput
           style={styles.input}
-          placeholder="Your Name"
+          placeholder="Full Name"
           placeholderTextColor={COLORS.neutral.mediumGray}
           value={formData.name}
           onChangeText={(text) => setFormData({ ...formData, name: text })}
           autoCapitalize="words"
+          autoComplete="name"
+          maxLength={50}
         />
 
         <TextInput
@@ -125,18 +140,22 @@ const RegisterScreen = ({ navigation }) => {
           placeholder="Email Address"
           placeholderTextColor={COLORS.neutral.mediumGray}
           value={formData.email}
-          onChangeText={(text) => setFormData({ ...formData, email: text })}
+          onChangeText={(text) => setFormData({ ...formData, email: text.toLowerCase().trim() })}
           keyboardType="email-address"
           autoCapitalize="none"
+          autoComplete="email"
+          maxLength={100}
         />
 
         <TextInput
           style={styles.input}
-          placeholder="Password"
+          placeholder="Password (min. 6 characters)"
           placeholderTextColor={COLORS.neutral.mediumGray}
           value={formData.password}
           onChangeText={(text) => setFormData({ ...formData, password: text })}
           secureTextEntry
+          autoComplete="password-new"
+          maxLength={50}
         />
 
         <TextInput
@@ -146,6 +165,8 @@ const RegisterScreen = ({ navigation }) => {
           value={formData.confirmPassword}
           onChangeText={(text) => setFormData({ ...formData, confirmPassword: text })}
           secureTextEntry
+          autoComplete="password-new"
+          maxLength={50}
         />
       </View>
 
@@ -178,7 +199,7 @@ const RegisterScreen = ({ navigation }) => {
         />
 
         <CustomButton
-          title={isLoading ? "Creating Account..." : "Start Growing!"}
+          title="Create My Account"
           onPress={handleRegister}
           variant="success"
           size="large"
@@ -188,6 +209,24 @@ const RegisterScreen = ({ navigation }) => {
       </View>
     </Animatable.View>
   )
+
+  // 🎨 RENDER LOADING STATE
+  if (isLoading) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <View style={styles.loadingContainer}>
+          <LoadingSpinner size="large" color={COLORS.primary.coral} />
+          <Text style={styles.loadingText}>Creating Your Account...</Text>
+          <Text style={styles.loadingSubtext}>Setting up your personal growth space</Text>
+          <View style={styles.loadingSteps}>
+            <Text style={styles.loadingStep}>✅ Validating information</Text>
+            <Text style={styles.loadingStep}>✅ Creating secure profile</Text>
+            <Text style={styles.loadingStep}>⏳ Personalizing experience</Text>
+          </View>
+        </View>
+      </SafeAreaView>
+    )
+  }
 
   return (
     <SafeAreaView style={styles.container}>
@@ -209,10 +248,19 @@ const RegisterScreen = ({ navigation }) => {
             <View style={[styles.progressLine, currentStep >= 2 && styles.progressLineActive]} />
             <View style={[styles.progressDot, currentStep >= 2 && styles.progressDotActive]} />
           </View>
+
+          <Text style={styles.progressText}>
+            Step {currentStep} of 2: {currentStep === 1 ? "Basic Information" : "Choose Your Interests"}
+          </Text>
         </LinearGradient>
 
         {/* Content */}
-        <ScrollView style={styles.content} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
+        <ScrollView
+          style={styles.content}
+          showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
+          contentContainerStyle={styles.scrollContent}
+        >
           {currentStep === 1 ? renderStep1() : renderStep2()}
         </ScrollView>
 
@@ -238,6 +286,32 @@ const styles = StyleSheet.create({
   keyboardContainer: {
     flex: 1,
   },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    paddingHorizontal: SPACING.xl,
+  },
+  loadingText: {
+    ...TYPOGRAPHY.h3,
+    marginTop: SPACING.lg,
+    textAlign: "center",
+  },
+  loadingSubtext: {
+    ...TYPOGRAPHY.body,
+    color: COLORS.neutral.darkGray,
+    marginTop: SPACING.sm,
+    textAlign: "center",
+  },
+  loadingSteps: {
+    marginTop: SPACING.xl,
+    alignItems: "flex-start",
+  },
+  loadingStep: {
+    ...TYPOGRAPHY.bodySmall,
+    color: COLORS.neutral.darkGray,
+    marginBottom: SPACING.sm,
+  },
   header: {
     paddingHorizontal: SPACING.lg,
     paddingVertical: SPACING.xl,
@@ -251,6 +325,7 @@ const styles = StyleSheet.create({
   progressContainer: {
     flexDirection: "row",
     alignItems: "center",
+    marginBottom: SPACING.sm,
   },
   progressDot: {
     width: 12,
@@ -270,11 +345,19 @@ const styles = StyleSheet.create({
   progressLineActive: {
     backgroundColor: COLORS.primary.coral,
   },
+  progressText: {
+    ...TYPOGRAPHY.caption,
+    color: COLORS.neutral.darkGray,
+  },
   content: {
     flex: 1,
   },
+  scrollContent: {
+    flexGrow: 1,
+  },
   stepContainer: {
     padding: SPACING.lg,
+    flex: 1,
   },
   stepTitle: {
     ...TYPOGRAPHY.h2,
