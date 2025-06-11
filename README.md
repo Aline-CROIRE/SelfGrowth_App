@@ -96,8 +96,8 @@ A comprehensive personal growth mobile application built with React Native and E
 
 1. **Clone the repository**
    ```bash
-   git clone https://github.com/yourusername/selfgrow-app.git
-   cd selfgrow-app
+   git clone [https://github.com//selfgrow-app.git](https://github.com/Aline-CROIRE/SelfGrowth_App.git)
+   cd selfgrowth-app
    ```
 
 2. **Install dependencies**
@@ -121,27 +121,36 @@ A comprehensive personal growth mobile application built with React Native and E
 
 ## 📱 QR Code for Testing
 
-![QR Code](./assets/screenshots/expo-qr-code.png)
+![QR Code](https://github.com/user-attachments/assets/f968ed52-5112-478c-a9f0-4a6f4ee0ccea)
+
 
 *Scan this QR code with Expo Go app to test the application*
 
 ## 📸 Screenshots
 
 ### Authentication Flow
-![Welcome Screen](./assets/screenshots/welcome-screen.png)
-![Login Screen](./assets/screenshots/login-screen.png)
-![Register Screen](./assets/screenshots/register-screen.png)
+![Welcome_Screen](https://github.com/user-attachments/assets/f130980d-70eb-46ed-a350-c4dadf0e0484)
+![Login_Screen](https://github.com/user-attachments/assets/03d09ddd-4934-4a19-b05b-1a4cbba659b8)
+![Register_Screen](https://github.com/user-attachments/assets/f0b63946-3d9e-4aad-b2a5-e22fe7d192d3)
+
 
 ### Main Application
-![Home Dashboard](./assets/screenshots/home-dashboard.png)
-![Journal Screen](./assets/screenshots/journal-screen.png)
-![Goals Screen](./assets/screenshots/goals-screen.png)
-![Profile Screen](./assets/screenshots/profile-screen.png)
+![Home_Dashboard](https://github.com/user-attachments/assets/cb875e5e-943a-416e-a839-2276d1525b49)
+
+![Journal_Screen](https://github.com/user-attachments/assets/fef9c442-fba9-4b23-8eb5-573e19a94013)
+
+![Goal_Screen](https://github.com/user-attachments/assets/2b091204-58d7-4557-bc75-154b40475c0f)
+
+![Profile_Screen](https://github.com/user-attachments/assets/a0384d69-a95c-4133-b996-1f8604295b9f)
+
 
 ### Additional Features
-![Daily Inspiration](./assets/screenshots/daily-inspiration.png)
-![Achievements](./assets/screenshots/achievements.png)
-![Statistics](./assets/screenshots/statistics.png)
+![Achievements](https://github.com/user-attachments/assets/2071d199-a4fb-4539-8ff9-027f49be4aef)
+
+![Daily_Insiparation](https://github.com/user-attachments/assets/610fcc08-55e3-4311-8a19-8cfb63f5ec03)
+
+![Statistics](https://github.com/user-attachments/assets/15a34945-336b-4357-8d8e-d83c78b5044d)
+
 
 ## 🎯 Key Features Demonstrated
 
@@ -202,10 +211,6 @@ A comprehensive personal growth mobile application built with React Native and E
 - [x] Responsive design works on different screen sizes
 - [x] Haptic feedback enhances user experience
 - [x] Demo account loads with sample data
-
-## 🎥 Demo Video
-
-[Link to demo video or GIF showing app functionality]
 
 ## 🚧 Challenges Faced & Solutions
 
@@ -277,24 +282,10 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 ## 👨‍💻 Author
 
 **Your Name**
-- GitHub: [@yourusername](https://github.com/yourusername)
-- Email: your.email@example.com
-- Portfolio: [your-portfolio.com](https://your-portfolio.com)
+- GitHub: [Aline_CROIRE](https://github.com/Aline-CROIRE/Aline-CROIRE)
+- Email:niyocroirealine@gmail.com
+- Portfolio: [https://alineprofile.vercel.app/](https://alineprofile.vercel.app/)
 
 ---
 
-*Built as a comprehensive personal growth application demonstrating advanced React Native development skills, authentication systems, data persistence, and beautiful mobile UI design.*
-```
-
-This README follows the exact same professional structure as your reference file while highlighting all the amazing features of your SelfGrow app! It showcases:
-
-🌟 **Professional presentation** with clear sections and formatting
-📱 **Comprehensive feature coverage** including all the advanced functionality
-🔧 **Detailed technical implementation** showing your development skills
-📸 **Screenshot placeholders** ready for your beautiful app images
-🚀 **Easy setup instructions** for anyone wanting to run your app
-✅ **Testing checklist** proving the app's reliability
-🎯 **Learning outcomes** highlighting your technical growth
-
-This README will make your SelfGrow app stand out in your portfolio and demonstrate your advanced React Native development capabilities! 🚀
 
