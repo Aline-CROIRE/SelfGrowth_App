@@ -1,371 +1,370 @@
 "use client"
 
-// 🏠 HOME SCREEN - Beautiful dashboard for personal growth
-
-import { useEffect, useRef } from "react"
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Dimensions, StatusBar } from "react-native"
+import { useState, useEffect } from "react"
+import { View, Text, ScrollView, TouchableOpacity, RefreshControl } from "react-native"
 import { LinearGradient } from "expo-linear-gradient"
+import { Ionicons } from "@expo/vector-icons"
 import * as Animatable from "react-native-animatable"
-import { SafeAreaView } from "react-native-safe-area-context"
-
-import { useApp } from "../../context/AppContext"
-import DailyInspiration from "../../components/common/DailyInsparation"
-import { COLORS } from "../../styles/colors"
-import { TYPOGRAPHY, SPACING, SHADOWS } from "../../styles/globalStyles"
-
-const { width } = Dimensions.get("window")
+import { globalStyles } from "../../styles/globalStyles"
+import { colors } from "../../styles/colors"
+import { useAuth } from "../../context/AuthContext"
+import { useData } from "../../context/DataContext"
+import { useTheme } from "../../context/ThemeContext"
+import LoadingSpinner from "../../components/common/LoadingSpinner"
+import JournalCard from "../../components/journal/JournalCard"
+import GoalCard from "../../components/goals/GoalCard"
 
 const HomeScreen = ({ navigation }) => {
-  const { state } = useApp()
-  const { user, entries, goals, stats } = state
+  const { user } = useAuth()
+  const { journals, goals, statistics, isLoading, loadAllData } = useData()
+  const { getHobbyColor } = useTheme()
+  const [refreshing, setRefreshing] = useState(false)
+  const [dailyQuote, setDailyQuote] = useState("")
 
-  // Animation refs
-  const headerRef = useRef()
-  const statsRef = useRef()
-  const quickActionsRef = useRef()
-  const recentRef = useRef()
+  const hobbyColor = getHobbyColor()
 
-  // 🎬 ENTRANCE ANIMATIONS
   useEffect(() => {
-    const animateEntrance = () => {
-      setTimeout(() => headerRef.current?.fadeInDown(800), 100)
-      setTimeout(() => statsRef.current?.fadeInLeft(800), 300)
-      setTimeout(() => quickActionsRef.current?.fadeInRight(800), 500)
-      setTimeout(() => recentRef.current?.fadeInUp(800), 700)
-    }
+    // Set a daily inspirational quote
+    const quotes = [
+      "The only way to do great work is to love what you do.",
+      "Believe you can and you're halfway there.",
+      "It does not matter how slowly you go as long as you do not stop.",
+      "The future belongs to those who believe in the beauty of their dreams.",
+      "Success is not final, failure is not fatal: It is the courage to continue that counts.",
+      "The best way to predict the future is to create it.",
+      "Your time is limited, don't waste it living someone else's life.",
+      "The journey of a thousand miles begins with one step.",
+    ]
 
-    animateEntrance()
+    // Use the current date to select a quote (so it changes daily)
+    const today = new Date()
+    const dayOfYear = Math.floor((today - new Date(today.getFullYear(), 0, 0)) / 1000 / 60 / 60 / 24)
+    setDailyQuote(quotes[dayOfYear % quotes.length])
   }, [])
 
-  // 🎯 GET PERSONALIZED GREETING - Uses actual username
-  const getGreeting = () => {
-    const hour = new Date().getHours()
-    const name = user?.name || "Champion" // Now uses actual username from database
-
-    if (hour < 12) return `Good morning, ${name}! ☀️`
-    if (hour < 17) return `Good afternoon, ${name}! 🌤️`
-    return `Good evening, ${name}! 🌙`
+  const onRefresh = async () => {
+    setRefreshing(true)
+    await loadAllData()
+    setRefreshing(false)
   }
 
-  // 🎨 RENDER QUICK ACTION - Now with actual functionality
-  const renderQuickAction = (title, icon, color, onPress) => (
-    <TouchableOpacity style={styles.quickAction} onPress={onPress} activeOpacity={0.8}>
-      <LinearGradient colors={[COLORS.neutral.white, COLORS.neutral.lightGray]} style={styles.quickActionGradient}>
-        <View style={[styles.quickActionIcon, { backgroundColor: color }]}>
-          <Text style={styles.quickActionIconText}>{icon}</Text>
-        </View>
-        <Text style={styles.quickActionTitle}>{title}</Text>
-      </LinearGradient>
-    </TouchableOpacity>
-  )
+  if (isLoading && !refreshing) {
+    return <LoadingSpinner />
+  }
 
-  // 🎨 RENDER STATS CARD
-  const renderStatsCard = (title, value, icon, color, onPress) => (
-    <TouchableOpacity style={styles.statsCard} onPress={onPress} activeOpacity={0.8}>
-      <LinearGradient
-        colors={[color, color + "80"]}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 1 }}
-        style={styles.statsGradient}
-      >
-        <Text style={styles.statsIcon}>{icon}</Text>
-        <Text style={styles.statsValue}>{value}</Text>
-        <Text style={styles.statsTitle}>{title}</Text>
-      </LinearGradient>
-    </TouchableOpacity>
-  )
-
-  // 🎨 RENDER RECENT ENTRY
-  const renderRecentEntry = (entry) => (
-    <TouchableOpacity
-      key={entry.id}
-      style={styles.recentEntry}
-      onPress={() => navigation.navigate("Journal", { entryId: entry.id })}
-      activeOpacity={0.8}
-    >
-      <View style={styles.recentEntryContent}>
-        <Text style={styles.recentEntryTitle}>{entry.title}</Text>
-        <Text style={styles.recentEntryPreview} numberOfLines={2}>
-          {entry.content}
-        </Text>
-        <Text style={styles.recentEntryDate}>{new Date(entry.createdAt).toLocaleDateString()}</Text>
-      </View>
-      <View style={[styles.recentEntryMood, { backgroundColor: entry.moodColor || COLORS.primary.coral }]} />
-    </TouchableOpacity>
-  )
+  const recentJournals = journals.slice(0, 2)
+  const activeGoals = goals.filter((goal) => goal.status === "ACTIVE").slice(0, 2)
 
   return (
-    <SafeAreaView style={styles.container}>
-      <StatusBar barStyle="light-content" backgroundColor={COLORS.primary.coral} />
-
+    <View style={globalStyles.container}>
       <ScrollView
-        style={styles.scrollView}
-        showsVerticalScrollIndicator={false}
-        contentContainerStyle={styles.scrollContent}
+        style={globalStyles.container}
+        contentContainerStyle={{ paddingBottom: 30 }}
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={[colors.primary.coral]} />
+        }
       >
-        {/* Beautiful Header */}
-        <Animatable.View ref={headerRef}>
-          <LinearGradient
-            colors={COLORS.gradients.sunrise}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 1 }}
-            style={styles.header}
-          >
-            <Text style={styles.greeting}>{getGreeting()}</Text>
-            <Text style={styles.motivationalText}>"Every day is a new opportunity to grow stronger"</Text>
-          </LinearGradient>
-        </Animatable.View>
+        {/* Header */}
+        <LinearGradient colors={colors.gradients.primary} style={{ paddingTop: 60, paddingBottom: 30 }}>
+          <View style={{ paddingHorizontal: 20 }}>
+            <Animatable.View animation="fadeIn" duration={1000}>
+              <Text style={[globalStyles.body, { color: colors.text.white, opacity: 0.9 }]}>Welcome back,</Text>
+              <Text style={[globalStyles.title, { color: colors.text.white, marginBottom: 16 }]}>
+                {user?.firstName || user?.username}
+              </Text>
+
+              {/* Stats Overview */}
+              <View style={[globalStyles.row, { marginBottom: 20 }]}>
+                <View
+                  style={{
+                    flex: 1,
+                    backgroundColor: "rgba(255, 255, 255, 0.2)",
+                    borderRadius: 16,
+                    padding: 16,
+                    marginRight: 8,
+                  }}
+                >
+                  <Text style={[globalStyles.caption, { color: colors.text.white, opacity: 0.9 }]}>Journal Streak</Text>
+                  <View style={[globalStyles.row, { alignItems: "baseline" }]}>
+                    <Text
+                      style={[
+                        globalStyles.title,
+                        { color: colors.text.white, fontSize: 24, marginRight: 4, marginBottom: 0 },
+                      ]}
+                    >
+                      {statistics.currentStreak || 0}
+                    </Text>
+                    <Text style={[globalStyles.caption, { color: colors.text.white }]}>days</Text>
+                  </View>
+                </View>
+
+                <View
+                  style={{
+                    flex: 1,
+                    backgroundColor: "rgba(255, 255, 255, 0.2)",
+                    borderRadius: 16,
+                    padding: 16,
+                    marginLeft: 8,
+                  }}
+                >
+                  <Text style={[globalStyles.caption, { color: colors.text.white, opacity: 0.9 }]}>
+                    Goals Completed
+                  </Text>
+                  <View style={[globalStyles.row, { alignItems: "baseline" }]}>
+                    <Text
+                      style={[
+                        globalStyles.title,
+                        { color: colors.text.white, fontSize: 24, marginRight: 4, marginBottom: 0 },
+                      ]}
+                    >
+                      {statistics.completedGoals || 0}
+                    </Text>
+                    <Text style={[globalStyles.caption, { color: colors.text.white }]}>
+                      /{statistics.totalGoals || 0}
+                    </Text>
+                  </View>
+                </View>
+              </View>
+            </Animatable.View>
+          </View>
+        </LinearGradient>
 
         {/* Daily Inspiration */}
-        <Animatable.View animation="fadeIn" delay={900}>
-          <DailyInspiration />
-        </Animatable.View>
-
-        {/* Stats Overview */}
-        <Animatable.View ref={statsRef} style={styles.section}>
-          <Text style={styles.sectionTitle}>Your Growth Journey</Text>
-          <View style={styles.statsContainer}>
-            {renderStatsCard("Journal Entries", stats.totalEntries, "📝", COLORS.hobbies.writing, () =>
-              navigation.navigate("Journal"),
-            )}
-            {renderStatsCard("Current Streak", `${stats.currentStreak} days`, "🔥", COLORS.primary.orange, () =>
-              navigation.navigate("Journal"),
-            )}
-            {renderStatsCard("Goals Completed", stats.goalsCompleted, "🎯", COLORS.status.success, () =>
-              navigation.navigate("Goals"),
-            )}
-            {renderStatsCard("Longest Streak", `${stats.longestStreak} days`, "⭐", COLORS.secondary.gold, () =>
-              navigation.navigate("Profile"),
-            )}
+        <Animatable.View animation="fadeInUp" duration={800} delay={300}>
+          <View style={[globalStyles.card, { marginTop: -20 }]}>
+            <View style={[globalStyles.row, { marginBottom: 8 }]}>
+              <Ionicons name="sunny" size={20} color={hobbyColor} style={{ marginRight: 8 }} />
+              <Text style={[globalStyles.heading, { fontSize: 16 }]}>Daily Inspiration</Text>
+            </View>
+            <Text style={[globalStyles.body, { fontStyle: "italic" }]}>"{dailyQuote}"</Text>
           </View>
         </Animatable.View>
 
-        {/* Quick Actions */}
-        <Animatable.View ref={quickActionsRef} style={styles.section}>
-          <Text style={styles.sectionTitle}>Quick Actions</Text>
-          <View style={styles.quickActionsContainer}>
-            {renderQuickAction("New Entry", "✍️", COLORS.hobbies.writing, () =>
-              navigation.navigate("Journal", { action: "new" }),
-            )}
-            {renderQuickAction("Set Goal", "🎯", COLORS.status.success, () =>
-              navigation.navigate("Goals", { action: "new" }),
-            )}
-            {renderQuickAction("View Progress", "📊", COLORS.primary.orange, () => navigation.navigate("Profile"))}
-            {renderQuickAction(
-              "Hobby Features",
-              "🎨",
-              COLORS.secondary.gold,
-              () => navigation.navigate("HobbyFeatures"), // We'll create this screen
-            )}
-          </View>
-        </Animatable.View>
-
-        {/* Recent Entries */}
-        <Animatable.View ref={recentRef} style={styles.section}>
-          <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>Recent Reflections</Text>
+        {/* Recent Journals */}
+        <View style={{ marginTop: 16, paddingHorizontal: 20 }}>
+          <View style={[globalStyles.spaceBetween, { marginBottom: 12 }]}>
+            <Text style={globalStyles.heading}>Recent Journals</Text>
             <TouchableOpacity onPress={() => navigation.navigate("Journal")}>
-              <Text style={styles.seeAllText}>See All</Text>
+              <Text style={[globalStyles.bodySecondary, { color: colors.primary.coral }]}>See All</Text>
             </TouchableOpacity>
           </View>
 
-          {entries.length > 0 ? (
-            <View style={styles.recentEntriesContainer}>{entries.slice(0, 3).map(renderRecentEntry)}</View>
+          {recentJournals.length > 0 ? (
+            recentJournals.map((journal) => (
+              <JournalCard
+                key={journal.id}
+                journal={journal}
+                onPress={() => navigation.navigate("Journal", { screen: "JournalDetail", params: { journal } })}
+                style={{ marginHorizontal: 0 }}
+              />
+            ))
           ) : (
-            <View style={styles.emptyState}>
-              <Text style={styles.emptyStateIcon}>📝</Text>
-              <Text style={styles.emptyStateTitle}>Start Your Journey</Text>
-              <Text style={styles.emptyStateText}>
-                Write your first journal entry and begin your path to personal growth
-              </Text>
-              <TouchableOpacity
-                style={styles.emptyStateButton}
-                onPress={() => navigation.navigate("Journal", { action: "new" })}
-              >
-                <LinearGradient colors={COLORS.gradients.sunrise} style={styles.emptyStateButtonGradient}>
-                  <Text style={styles.emptyStateButtonText}>Write First Entry</Text>
-                </LinearGradient>
-              </TouchableOpacity>
-            </View>
+            <TouchableOpacity
+              onPress={() => navigation.navigate("Journal", { screen: "CreateJournal" })}
+              style={[
+                globalStyles.card,
+                {
+                  marginHorizontal: 0,
+                  borderStyle: "dashed",
+                  borderWidth: 1,
+                  borderColor: colors.text.light,
+                  backgroundColor: colors.background.overlay,
+                },
+              ]}
+            >
+              <View style={[globalStyles.center, { padding: 20 }]}>
+                <Ionicons name="add-circle-outline" size={32} color={colors.primary.coral} />
+                <Text style={[globalStyles.bodySecondary, { marginTop: 8, textAlign: "center" }]}>
+                  Write your first journal entry
+                </Text>
+              </View>
+            </TouchableOpacity>
           )}
-        </Animatable.View>
+        </View>
+
+        {/* Active Goals */}
+        <View style={{ marginTop: 24, paddingHorizontal: 20 }}>
+          <View style={[globalStyles.spaceBetween, { marginBottom: 12 }]}>
+            <Text style={globalStyles.heading}>Active Goals</Text>
+            <TouchableOpacity onPress={() => navigation.navigate("Goals")}>
+              <Text style={[globalStyles.bodySecondary, { color: colors.primary.coral }]}>See All</Text>
+            </TouchableOpacity>
+          </View>
+
+          {activeGoals.length > 0 ? (
+            activeGoals.map((goal) => (
+              <GoalCard
+                key={goal.id}
+                goal={goal}
+                onPress={() => navigation.navigate("Goals", { screen: "GoalDetail", params: { goal } })}
+                style={{ marginHorizontal: 0 }}
+              />
+            ))
+          ) : (
+            <TouchableOpacity
+              onPress={() => navigation.navigate("Goals", { screen: "CreateGoal" })}
+              style={[
+                globalStyles.card,
+                {
+                  marginHorizontal: 0,
+                  borderStyle: "dashed",
+                  borderWidth: 1,
+                  borderColor: colors.text.light,
+                  backgroundColor: colors.background.overlay,
+                },
+              ]}
+            >
+              <View style={[globalStyles.center, { padding: 20 }]}>
+                <Ionicons name="flag-outline" size={32} color={colors.primary.coral} />
+                <Text style={[globalStyles.bodySecondary, { marginTop: 8, textAlign: "center" }]}>
+                  Set your first goal
+                </Text>
+              </View>
+            </TouchableOpacity>
+          )}
+        </View>
+
+        {/* Quick Actions */}
+        <View style={{ marginTop: 24, paddingHorizontal: 20 }}>
+          <Text style={[globalStyles.heading, { marginBottom: 12 }]}>Quick Actions</Text>
+
+          <View style={[globalStyles.row, { flexWrap: "wrap" }]}>
+            <TouchableOpacity
+              onPress={() => navigation.navigate("Journal", { screen: "CreateJournal" })}
+              style={{
+                width: "48%",
+                backgroundColor: colors.background.card,
+                borderRadius: 16,
+                padding: 16,
+                marginBottom: 16,
+                marginRight: "4%",
+                shadowColor: colors.shadow.light,
+                shadowOffset: { width: 0, height: 2 },
+                shadowOpacity: 0.1,
+                shadowRadius: 4,
+                elevation: 3,
+              }}
+            >
+              <View style={[globalStyles.center]}>
+                <View
+                  style={{
+                    width: 50,
+                    height: 50,
+                    borderRadius: 25,
+                    backgroundColor: `${colors.primary.coral}20`,
+                    justifyContent: "center",
+                    alignItems: "center",
+                    marginBottom: 12,
+                  }}
+                >
+                  <Ionicons name="create-outline" size={24} color={colors.primary.coral} />
+                </View>
+                <Text style={[globalStyles.bodySecondary, { textAlign: "center" }]}>New Journal</Text>
+              </View>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              onPress={() => navigation.navigate("Goals", { screen: "CreateGoal" })}
+              style={{
+                width: "48%",
+                backgroundColor: colors.background.card,
+                borderRadius: 16,
+                padding: 16,
+                marginBottom: 16,
+                shadowColor: colors.shadow.light,
+                shadowOffset: { width: 0, height: 2 },
+                shadowOpacity: 0.1,
+                shadowRadius: 4,
+                elevation: 3,
+              }}
+            >
+              <View style={[globalStyles.center]}>
+                <View
+                  style={{
+                    width: 50,
+                    height: 50,
+                    borderRadius: 25,
+                    backgroundColor: `${hobbyColor}20`,
+                    justifyContent: "center",
+                    alignItems: "center",
+                    marginBottom: 12,
+                  }}
+                >
+                  <Ionicons name="flag-outline" size={24} color={hobbyColor} />
+                </View>
+                <Text style={[globalStyles.bodySecondary, { textAlign: "center" }]}>New Goal</Text>
+              </View>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              onPress={() => navigation.navigate("Statistics")}
+              style={{
+                width: "48%",
+                backgroundColor: colors.background.card,
+                borderRadius: 16,
+                padding: 16,
+                marginRight: "4%",
+                shadowColor: colors.shadow.light,
+                shadowOffset: { width: 0, height: 2 },
+                shadowOpacity: 0.1,
+                shadowRadius: 4,
+                elevation: 3,
+              }}
+            >
+              <View style={[globalStyles.center]}>
+                <View
+                  style={{
+                    width: 50,
+                    height: 50,
+                    borderRadius: 25,
+                    backgroundColor: `${colors.warning}20`,
+                    justifyContent: "center",
+                    alignItems: "center",
+                    marginBottom: 12,
+                  }}
+                >
+                  <Ionicons name="stats-chart-outline" size={24} color={colors.warning} />
+                </View>
+                <Text style={[globalStyles.bodySecondary, { textAlign: "center" }]}>Statistics</Text>
+              </View>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              onPress={() => navigation.navigate("Achievements")}
+              style={{
+                width: "48%",
+                backgroundColor: colors.background.card,
+                borderRadius: 16,
+                padding: 16,
+                shadowColor: colors.shadow.light,
+                shadowOffset: { width: 0, height: 2 },
+                shadowOpacity: 0.1,
+                shadowRadius: 4,
+                elevation: 3,
+              }}
+            >
+              <View style={[globalStyles.center]}>
+                <View
+                  style={{
+                    width: 50,
+                    height: 50,
+                    borderRadius: 25,
+                    backgroundColor: `${colors.success}20`,
+                    justifyContent: "center",
+                    alignItems: "center",
+                    marginBottom: 12,
+                  }}
+                >
+                  <Ionicons name="trophy-outline" size={24} color={colors.success} />
+                </View>
+                <Text style={[globalStyles.bodySecondary, { textAlign: "center" }]}>Achievements</Text>
+              </View>
+            </TouchableOpacity>
+          </View>
+        </View>
       </ScrollView>
-    </SafeAreaView>
+    </View>
   )
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: COLORS.neutral.white,
-  },
-  scrollView: {
-    flex: 1,
-  },
-  scrollContent: {
-    paddingBottom: SPACING.xl,
-  },
-  header: {
-    paddingHorizontal: SPACING.lg,
-    paddingVertical: SPACING.xl,
-    borderBottomLeftRadius: 25,
-    borderBottomRightRadius: 25,
-    marginBottom: SPACING.lg,
-  },
-  greeting: {
-    ...TYPOGRAPHY.h2,
-    color: COLORS.neutral.white,
-    marginBottom: SPACING.sm,
-  },
-  motivationalText: {
-    ...TYPOGRAPHY.body,
-    color: COLORS.neutral.white + "CC",
-    fontStyle: "italic",
-  },
-  section: {
-    paddingHorizontal: SPACING.lg,
-    marginBottom: SPACING.xl,
-  },
-  sectionHeader: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: SPACING.md,
-  },
-  sectionTitle: {
-    ...TYPOGRAPHY.h3,
-    color: COLORS.neutral.black,
-  },
-  seeAllText: {
-    ...TYPOGRAPHY.bodySmall,
-    color: COLORS.primary.coral,
-    fontWeight: "600",
-  },
-  statsContainer: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    justifyContent: "space-between",
-  },
-  statsCard: {
-    width: (width - SPACING.lg * 3) / 2,
-    marginBottom: SPACING.md,
-  },
-  statsGradient: {
-    borderRadius: 16,
-    padding: SPACING.lg,
-    alignItems: "center",
-    ...SHADOWS.medium,
-  },
-  statsIcon: {
-    fontSize: 24,
-    marginBottom: SPACING.sm,
-  },
-  statsValue: {
-    ...TYPOGRAPHY.h2,
-    color: COLORS.neutral.white,
-    marginBottom: SPACING.xs,
-  },
-  statsTitle: {
-    ...TYPOGRAPHY.caption,
-    color: COLORS.neutral.white + "CC",
-    textAlign: "center",
-  },
-  quickActionsContainer: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    justifyContent: "space-between",
-  },
-  quickAction: {
-    width: (width - SPACING.lg * 3) / 2,
-    marginBottom: SPACING.md,
-  },
-  quickActionGradient: {
-    borderRadius: 16,
-    padding: SPACING.lg,
-    alignItems: "center",
-    ...SHADOWS.light,
-  },
-  quickActionIcon: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    alignItems: "center",
-    justifyContent: "center",
-    marginBottom: SPACING.sm,
-  },
-  quickActionIconText: {
-    fontSize: 20,
-  },
-  quickActionTitle: {
-    ...TYPOGRAPHY.bodySmall,
-    color: COLORS.neutral.black,
-    fontWeight: "600",
-    textAlign: "center",
-  },
-  recentEntriesContainer: {
-    marginTop: SPACING.sm,
-  },
-  recentEntry: {
-    flexDirection: "row",
-    backgroundColor: COLORS.neutral.white,
-    borderRadius: 12,
-    padding: SPACING.md,
-    marginBottom: SPACING.sm,
-    ...SHADOWS.light,
-  },
-  recentEntryContent: {
-    flex: 1,
-  },
-  recentEntryTitle: {
-    ...TYPOGRAPHY.h3,
-    fontSize: 16,
-    marginBottom: SPACING.xs,
-  },
-  recentEntryPreview: {
-    ...TYPOGRAPHY.bodySmall,
-    color: COLORS.neutral.darkGray,
-    marginBottom: SPACING.xs,
-  },
-  recentEntryDate: {
-    ...TYPOGRAPHY.caption,
-    color: COLORS.neutral.mediumGray,
-  },
-  recentEntryMood: {
-    width: 4,
-    borderRadius: 2,
-    marginLeft: SPACING.sm,
-  },
-  emptyState: {
-    alignItems: "center",
-    paddingVertical: SPACING.xl,
-  },
-  emptyStateIcon: {
-    fontSize: 48,
-    marginBottom: SPACING.md,
-  },
-  emptyStateTitle: {
-    ...TYPOGRAPHY.h3,
-    marginBottom: SPACING.sm,
-  },
-  emptyStateText: {
-    ...TYPOGRAPHY.body,
-    color: COLORS.neutral.darkGray,
-    textAlign: "center",
-    marginBottom: SPACING.lg,
-    paddingHorizontal: SPACING.lg,
-  },
-  emptyStateButton: {
-    borderRadius: 12,
-    overflow: "hidden",
-  },
-  emptyStateButtonGradient: {
-    paddingHorizontal: SPACING.lg,
-    paddingVertical: SPACING.md,
-  },
-  emptyStateButtonText: {
-    ...TYPOGRAPHY.button,
-    color: COLORS.neutral.white,
-  },
-})
 
 export default HomeScreen

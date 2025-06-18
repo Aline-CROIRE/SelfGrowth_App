@@ -1,414 +1,258 @@
 "use client"
 
-// 🔐 LOGIN SCREEN - Beautiful, secure authentication with real persistence
-
 import { useState } from "react"
-import {
-  View,
-  Text,
-  TextInput,
-  StyleSheet,
-  KeyboardAvoidingView,
-  Platform,
-  Alert,
-  StatusBar,
-  TouchableOpacity,
-} from "react-native"
+import { View, Text, ScrollView, TouchableOpacity, Alert } from "react-native"
 import { LinearGradient } from "expo-linear-gradient"
+import { Ionicons } from "@expo/vector-icons"
 import * as Animatable from "react-native-animatable"
-import { SafeAreaView } from "react-native-safe-area-context"
-
+import { globalStyles } from "../../styles/globalStyles"
+import { colors } from "../../styles/colors"
+import { useAuth } from "../../context/AuthContext"
+import { useEmail } from "../../context/EmailContext"
+import CustomInput from "../../components/common/CustomInput"
 import CustomButton from "../../components/common/customButton"
-import LoadingSpinner from "../../components/common/LoadingSpinner"
-import { useApp } from "../../context/AppContext"
-import { COLORS } from "../../styles/colors"
-import { TYPOGRAPHY, SPACING, GLOBAL_STYLES } from "../../styles/globalStyles"
+import EmailStatusCard from "../../components/common/EmailStatusCard"
 
 const LoginScreen = ({ navigation }) => {
-  const { actions } = useApp()
-
-  // 📝 FORM STATE
   const [formData, setFormData] = useState({
     email: "",
     password: "",
   })
-
-  const [isLoading, setIsLoading] = useState(false)
+  const [errors, setErrors] = useState({})
   const [showPassword, setShowPassword] = useState(false)
+  const [showForgotPassword, setShowForgotPassword] = useState(false)
 
-  // 🎯 FORM VALIDATION
+  const { login, isLoading, error, clearError } = useAuth()
+  const { sendPasswordResetEmail, sendVerificationEmail, emailStatus } = useEmail()
+
   const validateForm = () => {
+    const newErrors = {}
+
     if (!formData.email.trim()) {
-      Alert.alert("Missing Email", "Please enter your email address")
-      return false
+      newErrors.email = "Email is required"
+    } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
+      newErrors.email = "Please enter a valid email"
     }
-    if (!formData.email.includes("@")) {
-      Alert.alert("Invalid Email", "Please enter a valid email address")
-      return false
+
+    if (!formData.password) {
+      newErrors.password = "Password is required"
+    } else if (formData.password.length < 6) {
+      newErrors.password = "Password must be at least 6 characters"
     }
-    if (!formData.password.trim()) {
-      Alert.alert("Missing Password", "Please enter your password")
-      return false
-    }
-    if (formData.password.length < 6) {
-      Alert.alert("Invalid Password", "Password must be at least 6 characters")
-      return false
-    }
-    return true
+
+    setErrors(newErrors)
+    return Object.keys(newErrors).length === 0
   }
 
-  // 🚀 HANDLE LOGIN - Real authentication with user lookup
   const handleLogin = async () => {
-    if (!validateForm()) return
+    clearError()
 
-    setIsLoading(true)
+    if (!validateForm()) {
+      return
+    }
 
-    try {
-      // Simulate API call delay
-      await new Promise((resolve) => setTimeout(resolve, 1500))
+    const result = await login(formData.email.trim().toLowerCase(), formData.password)
 
-      // Authenticate user using our database
-      const result = await actions.login(formData.email, formData.password)
-
-      if (result.success) {
+    if (!result.success) {
+      // Check if it's an email verification issue
+      if (result.message?.includes("verify") || result.message?.includes("verification")) {
         Alert.alert(
-          `Welcome Back, ${result.user.name}! 🎉`,
-          `Great to see you again! Ready to continue your growth journey?`,
-          [{ text: "Let's Go!", style: "default" }],
+          "Email Not Verified",
+          "Please verify your email address before signing in. Would you like us to resend the verification email?",
+          [
+            { text: "Cancel", style: "cancel" },
+            {
+              text: "Resend Email",
+              onPress: () => handleResendVerification(),
+            },
+          ],
         )
       } else {
-        Alert.alert("Login Failed", result.error || "Please check your credentials and try again.")
+        Alert.alert("Sign In Failed", result.message || "Please check your credentials and try again.")
       }
-    } catch (error) {
-      console.error("Login error:", error)
-      Alert.alert("Login Failed", "Unable to sign in. Please try again.")
-    } finally {
-      setIsLoading(false)
     }
   }
 
-  // 🔄 DEMO LOGIN - Enhanced with proper demo user
   const handleDemoLogin = async () => {
-    setIsLoading(true)
+    clearError()
+    const result = await login("user@example.com", "User123!")
 
-    try {
-      await new Promise((resolve) => setTimeout(resolve, 1000))
-
-      const result = await actions.loginDemo()
-
-      if (result.success) {
-        Alert.alert(
-          "Demo Mode Active! 🚀",
-          `Welcome ${result.user.name}! You're using a demo account with sample data to explore all features.`,
-          [{ text: "Start Exploring!", style: "default" }],
-        )
-      }
-    } catch (error) {
-      console.error("Demo login error:", error)
-      Alert.alert("Demo Failed", "Unable to start demo mode. Please try again.")
-    } finally {
-      setIsLoading(false)
+    if (!result.success) {
+      Alert.alert("Demo Login Failed", "Please try again or contact support.")
     }
   }
 
-  if (isLoading) {
-    return (
-      <SafeAreaView style={styles.container}>
-        <View style={styles.loadingContainer}>
-          <LoadingSpinner size="large" color={COLORS.primary.coral} />
-          <Text style={styles.loadingText}>{formData.email ? "Signing you in..." : "Preparing demo..."}</Text>
-          <Text style={styles.loadingSubtext}>
-            {formData.email ? "Verifying your credentials" : "Loading sample data"}
-          </Text>
-        </View>
-      </SafeAreaView>
-    )
+  const handleForgotPassword = async () => {
+    if (!formData.email.trim()) {
+      Alert.alert("Email Required", "Please enter your email address first.")
+      return
+    }
+
+    if (!/\S+@\S+\.\S+/.test(formData.email)) {
+      Alert.alert("Invalid Email", "Please enter a valid email address.")
+      return
+    }
+
+    await sendPasswordResetEmail(formData.email.trim().toLowerCase())
+    setShowForgotPassword(true)
+  }
+
+  const handleResendVerification = async () => {
+    if (!formData.email.trim()) {
+      Alert.alert("Email Required", "Please enter your email address first.")
+      return
+    }
+
+    await sendVerificationEmail(formData.email.trim().toLowerCase())
+  }
+
+  const handleResendPasswordReset = async () => {
+    await sendPasswordResetEmail(formData.email.trim().toLowerCase())
+  }
+
+  const updateFormData = (field, value) => {
+    setFormData((prev) => ({ ...prev, [field]: value }))
+    if (errors[field]) {
+      setErrors((prev) => ({ ...prev, [field]: null }))
+    }
   }
 
   return (
-    <SafeAreaView style={styles.container}>
-      <StatusBar barStyle="light-content" backgroundColor={COLORS.primary.coral} />
-
-      <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : "height"} style={styles.keyboardContainer}>
-        {/* Beautiful Header */}
-        <LinearGradient
-          colors={COLORS.gradients.sunrise}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 1 }}
-          style={styles.header}
-        >
-          <Animatable.View animation="bounceIn" duration={1000}>
-            <Text style={styles.logo}>🌱</Text>
-          </Animatable.View>
-
-          <Animatable.View animation="fadeInUp" delay={500}>
-            <Text style={styles.headerTitle}>Welcome Back</Text>
-            <Text style={styles.headerSubtitle}>Continue your growth journey</Text>
-          </Animatable.View>
-        </LinearGradient>
-
-        {/* Login Form */}
-        <Animatable.View animation="fadeInUp" delay={800} style={styles.formContainer}>
-          <View style={styles.inputContainer}>
-            <TextInput
-              style={styles.input}
-              placeholder="Email Address"
-              placeholderTextColor={COLORS.neutral.mediumGray}
-              value={formData.email}
-              onChangeText={(text) => setFormData({ ...formData, email: text.toLowerCase().trim() })}
-              keyboardType="email-address"
-              autoCapitalize="none"
-              autoCorrect={false}
-              autoComplete="email"
-            />
-
-            <View style={styles.passwordContainer}>
-              <TextInput
-                style={[styles.input, styles.passwordInput]}
-                placeholder="Password"
-                placeholderTextColor={COLORS.neutral.mediumGray}
-                value={formData.password}
-                onChangeText={(text) => setFormData({ ...formData, password: text })}
-                secureTextEntry={!showPassword}
-                autoComplete="password"
-              />
-              <TouchableOpacity style={styles.eyeButton} onPress={() => setShowPassword(!showPassword)}>
-                <Text style={styles.eyeIcon}>{showPassword ? "👁️" : "👁️‍🗨️"}</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-
-          {/* Forgot Password */}
+    <LinearGradient colors={colors.gradients.sunset} style={globalStyles.container}>
+      <ScrollView
+        style={globalStyles.container}
+        contentContainerStyle={{ flexGrow: 1 }}
+        keyboardShouldPersistTaps="handled"
+      >
+        {/* Header */}
+        <View style={{ paddingTop: 60, paddingHorizontal: 20, marginBottom: 40 }}>
           <TouchableOpacity
-            style={styles.forgotPassword}
-            onPress={() =>
-              Alert.alert(
-                "Reset Password",
-                "Password reset functionality will be available in the next update. For now, you can use any email and password combination to sign in.",
-                [{ text: "Got it!", style: "default" }],
-              )
-            }
+            onPress={() => navigation.goBack()}
+            style={{
+              width: 40,
+              height: 40,
+              borderRadius: 20,
+              backgroundColor: "rgba(255, 255, 255, 0.2)",
+              justifyContent: "center",
+              alignItems: "center",
+              marginBottom: 20,
+            }}
           >
-            <Text style={styles.forgotPasswordText}>Forgot Password?</Text>
+            <Ionicons name="arrow-back" size={20} color={colors.text.white} />
           </TouchableOpacity>
 
-          {/* Login Buttons */}
-          <View style={styles.buttonContainer}>
-            <CustomButton
-              title="Sign In"
-              onPress={handleLogin}
-              variant="primary"
-              size="large"
-              disabled={isLoading}
-              style={styles.loginButton}
-            />
+          <Animatable.View animation="fadeInDown" duration={1000}>
+            <Text style={[globalStyles.title, { color: colors.text.white, marginBottom: 8 }]}>Welcome Back!</Text>
+            <Text style={[globalStyles.bodySecondary, { color: colors.text.white, opacity: 0.9 }]}>
+              Continue your growth journey
+            </Text>
+          </Animatable.View>
+        </View>
 
-            <CustomButton
-              title="Try Demo Account"
-              onPress={handleDemoLogin}
-              variant="outline"
-              size="medium"
-              disabled={isLoading}
-              style={styles.demoButton}
-            />
-          </View>
+        {/* Form */}
+        <Animatable.View
+          animation="slideInUp"
+          duration={1000}
+          style={{
+            flex: 1,
+            backgroundColor: colors.background.primary,
+            borderTopLeftRadius: 30,
+            borderTopRightRadius: 30,
+            paddingHorizontal: 20,
+            paddingTop: 30,
+          }}
+        >
+          <CustomInput
+            label="Email Address"
+            value={formData.email}
+            onChangeText={(value) => updateFormData("email", value)}
+            placeholder="Enter your email"
+            keyboardType="email-address"
+            error={errors.email}
+            leftIcon={<Ionicons name="mail-outline" size={20} color={colors.text.secondary} />}
+          />
 
-          {/* Social Login Placeholder */}
-          <View style={styles.socialContainer}>
-            <View style={styles.divider}>
-              <View style={styles.dividerLine} />
-              <Text style={styles.dividerText}>or continue with</Text>
-              <View style={styles.dividerLine} />
-            </View>
+          <CustomInput
+            label="Password"
+            value={formData.password}
+            onChangeText={(value) => updateFormData("password", value)}
+            placeholder="Enter your password"
+            secureTextEntry={!showPassword}
+            error={errors.password}
+            leftIcon={<Ionicons name="lock-closed-outline" size={20} color={colors.text.secondary} />}
+            rightIcon={
+              <Ionicons
+                name={showPassword ? "eye-off-outline" : "eye-outline"}
+                size={20}
+                color={colors.text.secondary}
+              />
+            }
+            onRightIconPress={() => setShowPassword(!showPassword)}
+          />
 
-            <View style={styles.socialButtons}>
-              <TouchableOpacity
-                style={styles.socialButton}
-                onPress={() =>
-                  Alert.alert("Coming Soon", "Social login will be available in the next update!", [
-                    { text: "OK", style: "default" },
-                  ])
-                }
+          {error && (
+            <Animatable.View animation="shake" duration={500}>
+              <Text
+                style={[globalStyles.bodySecondary, { color: colors.error, textAlign: "center", marginVertical: 10 }]}
               >
-                <Text style={styles.socialIcon}>📱</Text>
-                <Text style={styles.socialText}>Google</Text>
-              </TouchableOpacity>
+                {error}
+              </Text>
+            </Animatable.View>
+          )}
 
-              <TouchableOpacity
-                style={styles.socialButton}
-                onPress={() =>
-                  Alert.alert("Coming Soon", "Social login will be available in the next update!", [
-                    { text: "OK", style: "default" },
-                  ])
-                }
+          {/* Email Status Cards */}
+          {emailStatus.verification.sent && (
+            <EmailStatusCard
+              type="verification"
+              email={formData.email}
+              onResend={handleResendVerification}
+              style={{ marginBottom: 16 }}
+            />
+          )}
+
+          {showForgotPassword && emailStatus.passwordReset.sent && (
+            <EmailStatusCard
+              type="passwordReset"
+              email={formData.email}
+              onResend={handleResendPasswordReset}
+              style={{ marginBottom: 16 }}
+            />
+          )}
+
+          <CustomButton
+            title="Sign In"
+            onPress={handleLogin}
+            loading={isLoading}
+            style={{ marginTop: 20, marginBottom: 16 }}
+          />
+
+          <CustomButton
+            title="Try Demo Account"
+            onPress={handleDemoLogin}
+            variant="outline"
+            style={{ marginBottom: 20 }}
+          />
+
+          {/* Forgot Password */}
+          <TouchableOpacity onPress={handleForgotPassword} style={{ alignSelf: "center", marginBottom: 30 }}>
+            <Text style={[globalStyles.bodySecondary, { color: colors.primary.coral }]}>Forgot Password?</Text>
+          </TouchableOpacity>
+
+          {/* Sign Up Link */}
+          <View style={[globalStyles.row, { justifyContent: "center" }]}>
+            <Text style={globalStyles.bodySecondary}>Don't have an account? </Text>
+            <TouchableOpacity onPress={() => navigation.navigate("Register")}>
+              <Text
+                style={[globalStyles.bodySecondary, { color: colors.primary.coral, fontFamily: "Poppins-SemiBold" }]}
               >
-                <Text style={styles.socialIcon}>📘</Text>
-                <Text style={styles.socialText}>Facebook</Text>
-              </TouchableOpacity>
-            </View>
+                Sign Up
+              </Text>
+            </TouchableOpacity>
           </View>
         </Animatable.View>
-
-        {/* Footer */}
-        <View style={styles.footer}>
-          <Text style={styles.footerText}>
-            Don't have an account?{" "}
-            <Text style={styles.footerLink} onPress={() => navigation.navigate("Register")}>
-              Sign Up
-            </Text>
-          </Text>
-        </View>
-      </KeyboardAvoidingView>
-    </SafeAreaView>
+      </ScrollView>
+    </LinearGradient>
   )
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: COLORS.neutral.white,
-  },
-  keyboardContainer: {
-    flex: 1,
-  },
-  loadingContainer: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    paddingHorizontal: SPACING.xl,
-  },
-  loadingText: {
-    ...TYPOGRAPHY.h3,
-    marginTop: SPACING.lg,
-    textAlign: "center",
-  },
-  loadingSubtext: {
-    ...TYPOGRAPHY.body,
-    color: COLORS.neutral.darkGray,
-    marginTop: SPACING.sm,
-    textAlign: "center",
-  },
-  header: {
-    paddingHorizontal: SPACING.lg,
-    paddingVertical: SPACING.xxl,
-    alignItems: "center",
-    borderBottomLeftRadius: 30,
-    borderBottomRightRadius: 30,
-  },
-  logo: {
-    fontSize: 60,
-    marginBottom: SPACING.lg,
-  },
-  headerTitle: {
-    ...TYPOGRAPHY.h1,
-    color: COLORS.neutral.white,
-    textAlign: "center",
-    marginBottom: SPACING.sm,
-  },
-  headerSubtitle: {
-    ...TYPOGRAPHY.body,
-    color: COLORS.neutral.white + "CC",
-    textAlign: "center",
-  },
-  formContainer: {
-    flex: 1,
-    padding: SPACING.lg,
-    paddingTop: SPACING.xl,
-  },
-  inputContainer: {
-    marginBottom: SPACING.lg,
-  },
-  input: {
-    ...GLOBAL_STYLES.input,
-    marginBottom: SPACING.md,
-  },
-  passwordContainer: {
-    position: "relative",
-  },
-  passwordInput: {
-    paddingRight: 50,
-  },
-  eyeButton: {
-    position: "absolute",
-    right: SPACING.md,
-    top: SPACING.md,
-    padding: SPACING.xs,
-  },
-  eyeIcon: {
-    fontSize: 20,
-  },
-  forgotPassword: {
-    alignSelf: "flex-end",
-    marginBottom: SPACING.xl,
-  },
-  forgotPasswordText: {
-    ...TYPOGRAPHY.bodySmall,
-    color: COLORS.primary.coral,
-    fontWeight: "600",
-  },
-  buttonContainer: {
-    marginBottom: SPACING.xl,
-  },
-  loginButton: {
-    marginBottom: SPACING.md,
-  },
-  demoButton: {
-    marginBottom: SPACING.lg,
-  },
-  socialContainer: {
-    marginBottom: SPACING.lg,
-  },
-  divider: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginBottom: SPACING.lg,
-  },
-  dividerLine: {
-    flex: 1,
-    height: 1,
-    backgroundColor: COLORS.neutral.lightGray,
-  },
-  dividerText: {
-    ...TYPOGRAPHY.caption,
-    color: COLORS.neutral.mediumGray,
-    paddingHorizontal: SPACING.md,
-  },
-  socialButtons: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-  },
-  socialButton: {
-    flex: 1,
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: COLORS.neutral.lightGray,
-    borderRadius: 12,
-    padding: SPACING.md,
-    marginHorizontal: SPACING.xs,
-  },
-  socialIcon: {
-    fontSize: 20,
-    marginRight: SPACING.sm,
-  },
-  socialText: {
-    ...TYPOGRAPHY.button,
-    color: COLORS.neutral.darkGray,
-  },
-  footer: {
-    padding: SPACING.lg,
-    alignItems: "center",
-    borderTopWidth: 1,
-    borderTopColor: COLORS.neutral.lightGray,
-  },
-  footerText: {
-    ...TYPOGRAPHY.body,
-    color: COLORS.neutral.darkGray,
-  },
-  footerLink: {
-    color: COLORS.primary.coral,
-    fontWeight: "600",
-  },
-})
 
 export default LoginScreen

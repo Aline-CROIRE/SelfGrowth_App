@@ -1,184 +1,313 @@
 "use client"
 
-// 🌟 WELCOME SCREEN - First impression that inspires users
-
-import { useEffect, useRef } from "react"
-import { View, Text, StyleSheet, Dimensions, StatusBar } from "react-native"
+import React, { useEffect, useRef, useState } from "react"
+import {
+  View,
+  Text,
+  Dimensions,
+  ScrollView,
+  Animated,
+  StyleSheet,
+  TouchableOpacity,
+  Platform,
+} from "react-native"
 import { LinearGradient } from "expo-linear-gradient"
 import * as Animatable from "react-native-animatable"
 import { SafeAreaView } from "react-native-safe-area-context"
 
-import CustomButton from "../../components/common/customButton"
-import { COLORS } from "../../styles/colors"
-import { TYPOGRAPHY, SPACING } from "../../styles/globalStyles"
-
-const { width, height } = Dimensions.get("window")
+const { width } = Dimensions.get("window")
 
 const WelcomeScreen = ({ navigation }) => {
-  const logoRef = useRef()
-  const titleRef = useRef()
-  const subtitleRef = useRef()
-  const buttonsRef = useRef()
+  const scrollY = useRef(new Animated.Value(0)).current
+  const fadeAnim = useRef(new Animated.Value(0)).current
+  const slideAnim = useRef(new Animated.Value(50)).current
 
-  // 🎬 BEAUTIFUL ENTRANCE ANIMATION
+  const inspirationalQuotes = [
+    "Every day is a new beginning. Take a deep breath, smile, and start again.",
+    "The journey of a thousand miles begins with one step.",
+    "Growth begins at the end of your comfort zone.",
+    "Your only limit is your mind.",
+    "Dream it. Believe it. Build it.",
+    "Success is not final, failure is not fatal: it is the courage to continue that counts.",
+    "The future belongs to those who believe in the beauty of their dreams.",
+  ]
+
+  const [currentQuote, setCurrentQuote] = useState(0)
+
   useEffect(() => {
-    const animateEntrance = async () => {
-      // Stagger animations for smooth entrance
-      setTimeout(() => logoRef.current?.fadeInDown(800), 200)
-      setTimeout(() => titleRef.current?.fadeInUp(800), 600)
-      setTimeout(() => subtitleRef.current?.fadeInUp(800), 1000)
-      setTimeout(() => buttonsRef.current?.fadeInUp(800), 1400)
-    }
+    Animated.parallel([
+      Animated.timing(fadeAnim, {
+        toValue: 1,
+        duration: 1000,
+        useNativeDriver: true,
+      }),
+      Animated.timing(slideAnim, {
+        toValue: 0,
+        duration: 1000,
+        useNativeDriver: true,
+      }),
+    ]).start()
 
-    animateEntrance()
+    const interval = setInterval(() => {
+      setCurrentQuote((prev) => (prev + 1) % inspirationalQuotes.length)
+    }, 4000)
+
+    return () => clearInterval(interval)
   }, [])
 
+  const features = [
+    { icon: "📝", title: "Journal" },
+    { icon: "🎯", title: "Goals" },
+    { icon: "🏆", title: "Achieve" },
+    { icon: "📚", title: "Learn" },
+  ]
+
+  const benefits = [
+    "🌱 Personal Growth Tracking",
+    "📊 Progress Analytics",
+    "🎨 Customizable Experience",
+    "🔒 Private & Secure",
+    "💡 AI-Powered Insights",
+    "🌟 Achievement System",
+  ]
+
   return (
-    <SafeAreaView style={styles.container}>
-      <StatusBar barStyle="light-content" backgroundColor={COLORS.primary.coral} />
+  <LinearGradient
+  colors={["#fad0c4", "#fad0c4", "#ff9a9e"]}
+  start={{ x: 0.5, y: 0 }}
+  end={{ x: 0.5, y: 1 }}
+  style={styles.gradient}
+>
 
-      {/* Beautiful Gradient Background */}
-      <LinearGradient
-        colors={COLORS.gradients.sunrise}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 1 }}
-        style={styles.gradient}
-      >
-        {/* Decorative Elements */}
-        <View style={styles.decorativeCircle1} />
-        <View style={styles.decorativeCircle2} />
+      <SafeAreaView style={styles.container}>
+        <ScrollView
+          style={styles.scroll}
+          contentContainerStyle={styles.content}
+          showsVerticalScrollIndicator={false}
+          onScroll={Animated.event([{ nativeEvent: { contentOffset: { y: scrollY } } }], {
+            useNativeDriver: false,
+          })}
+          scrollEventThrottle={16}
+        >
+          <Animated.View
+            style={[
+              styles.heroContainer,
+              { opacity: fadeAnim, transform: [{ translateY: slideAnim }] },
+            ]}
+          >
+            <Animatable.View animation="bounceIn" duration={1500} style={styles.center}>
+              <View style={styles.iconCircle}>
+                <Text style={{ fontSize: 70 }}>🌱</Text>
+              </View>
+              <Text style={styles.title}>SelfGrow</Text>
+              <Text style={styles.subtitle}>Your Personal Growth & Independence Journey</Text>
+            </Animatable.View>
 
-        <View style={styles.content}>
-          {/* App Logo/Icon */}
-          <Animatable.View ref={logoRef} style={styles.logoContainer}>
-            <Text style={styles.logo}>🌱</Text>
+            <Animatable.View
+              key={currentQuote}
+              animation="fadeInUp"
+              duration={1000}
+              style={styles.quoteContainer}
+            >
+              <Text style={styles.quoteText}>"{inspirationalQuotes[currentQuote]}"</Text>
+            </Animatable.View>
+
+            <Animatable.View animation="fadeInUp" delay={500} duration={1000} style={styles.featureGrid}>
+              {features.map((feature, index) => (
+                <Animatable.View
+                  key={index}
+                  animation="fadeInUp"
+                  delay={600 + index * 100}
+                  style={styles.featureItem}
+                >
+                  <View style={styles.featureIcon}>
+                    <Text style={{ fontSize: 28 }}>{feature.icon}</Text>
+                  </View>
+                  <Text style={styles.featureTitle}>{feature.title}</Text>
+                </Animatable.View>
+              ))}
+            </Animatable.View>
+          </Animated.View>
+
+          <Animatable.View animation="slideInUp" delay={1000} duration={1000} style={styles.section}>
+            <Text style={styles.sectionTitle}>Why Choose SelfGrow?</Text>
+            <View style={styles.benefitWrapper}>
+              {benefits.map((benefit, index) => (
+                <Animatable.View
+                  key={index}
+                  animation="fadeInLeft"
+                  delay={1200 + index * 100}
+                  style={styles.benefitItem}
+                >
+                  <Text style={styles.benefitText}>{benefit}</Text>
+                </Animatable.View>
+              ))}
+            </View>
           </Animatable.View>
 
-          {/* Welcome Text */}
-          <Animatable.View ref={titleRef} style={styles.textContainer}>
-            <Text style={styles.title}>Welcome to SelfGrow</Text>
-          </Animatable.View>
-
-          <Animatable.View ref={subtitleRef} style={styles.textContainer}>
-            <Text style={styles.subtitle}>
-              Your personal journey to independence, growth, and achieving your dreams starts here.
-            </Text>
-          </Animatable.View>
-
-          {/* Action Buttons */}
-          <Animatable.View ref={buttonsRef} style={styles.buttonContainer}>
-            <CustomButton
-              title="Start Your Journey"
+          <Animatable.View animation="slideInUp" delay={1500} duration={1000} style={styles.ctaSection}>
+            <TouchableOpacity
+              style={styles.primaryBtn}
               onPress={() => navigation.navigate("Register")}
-              variant="secondary"
-              size="large"
-              style={styles.primaryButton}
-            />
+            >
+              <Text style={styles.primaryBtnText}>Start Your Journey</Text>
+            </TouchableOpacity>
 
-            <CustomButton
-              title="I Already Have an Account"
+            <TouchableOpacity
+              style={styles.secondaryBtn}
               onPress={() => navigation.navigate("Login")}
-              variant="outline"
-              size="medium"
-              style={styles.secondaryButton}
-            />
-          </Animatable.View>
+            >
+              <Text style={styles.secondaryBtnText}>I Already Have an Account</Text>
+            </TouchableOpacity>
 
-          {/* Inspiring Quote */}
-          <Animatable.View animation="pulse" iterationCount="infinite" duration={3000} style={styles.quoteContainer}>
-            <Text style={styles.quote}>"The journey of a thousand miles begins with a single step"</Text>
+            <View style={styles.trustContainer}>
+              <Text style={styles.trustText}>🔒 Your data is secure and private</Text>
+              <Text style={[styles.trustText, { marginTop: 4 }]}>
+                ✨ Join thousands on their growth journey
+              </Text>
+            </View>
           </Animatable.View>
-        </View>
-      </LinearGradient>
-    </SafeAreaView>
+        </ScrollView>
+      </SafeAreaView>
+    </LinearGradient>
   )
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
   gradient: {
     flex: 1,
-    position: "relative",
   },
-  decorativeCircle1: {
-    position: "absolute",
-    top: -50,
-    right: -50,
-    width: 200,
-    height: 200,
-    borderRadius: 100,
-    backgroundColor: COLORS.neutral.white + "20",
+  container: {
+    flex: 1,
+    paddingTop: Platform.OS === "ios" ? 44 : 24,
   },
-  decorativeCircle2: {
-    position: "absolute",
-    bottom: -100,
-    left: -100,
-    width: 300,
-    height: 300,
-    borderRadius: 150,
-    backgroundColor: COLORS.neutral.white + "10",
+  scroll: {
+    flex: 1,
   },
   content: {
-    flex: 1,
-    justifyContent: "center",
+    paddingHorizontal: 20,
+    paddingBottom: 60,
+    flexGrow: 1,
+  },
+  heroContainer: {
     alignItems: "center",
-    paddingHorizontal: SPACING.xl,
-    zIndex: 1,
+    marginTop: 20,
   },
-  logoContainer: {
-    marginBottom: SPACING.xl,
-  },
-  logo: {
-    fontSize: 80,
-    textAlign: "center",
-  },
-  textContainer: {
+  center: {
     alignItems: "center",
-    marginBottom: SPACING.lg,
+  },
+  iconCircle: {
+    backgroundColor: "#ffffff90",
+    padding: 20,
+    borderRadius: 100,
+    marginBottom: 10,
   },
   title: {
-    ...TYPOGRAPHY.h1,
     fontSize: 36,
-    color: COLORS.neutral.white,
-    textAlign: "center",
+    color: "#fff",
     fontWeight: "bold",
-    textShadowColor: "rgba(0,0,0,0.3)",
-    textShadowOffset: { width: 0, height: 2 },
-    textShadowRadius: 4,
+    marginTop: 10,
   },
   subtitle: {
-    ...TYPOGRAPHY.body,
-    fontSize: 18,
-    color: COLORS.neutral.white,
+    fontSize: 16,
+    color: "#fff",
     textAlign: "center",
-    lineHeight: 26,
-    opacity: 0.9,
-    paddingHorizontal: SPACING.md,
-  },
-  buttonContainer: {
-    width: "100%",
-    marginTop: SPACING.xl,
-    marginBottom: SPACING.lg,
-  },
-  primaryButton: {
-    marginBottom: SPACING.md,
-  },
-  secondaryButton: {
-    marginBottom: SPACING.lg,
+    marginTop: 5,
   },
   quoteContainer: {
-    position: "absolute",
-    bottom: SPACING.xl,
-    paddingHorizontal: SPACING.lg,
+    marginVertical: 20,
+    paddingHorizontal: 10,
   },
-  quote: {
-    ...TYPOGRAPHY.caption,
-    color: COLORS.neutral.white,
-    textAlign: "center",
+  quoteText: {
+    fontSize: 16,
     fontStyle: "italic",
-    opacity: 0.8,
+    color: "#fff",
+    textAlign: "center",
+  },
+  featureGrid: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    justifyContent: "space-between",
+    marginTop: 10,
+  },
+  featureItem: {
+    width: "48%",
+    backgroundColor: "#ffffff40",
+    padding: 16,
+    marginVertical: 8,
+    borderRadius: 12,
+    alignItems: "center",
+  },
+  featureIcon: {
+    marginBottom: 10,
+  },
+  featureTitle: {
+    fontSize: 16,
+    fontWeight: "600",
+    color: "#fff",
+  },
+  section: {
+    marginTop: 30,
+  },
+  sectionTitle: {
+    fontSize: 20,
+    fontWeight: "bold",
+    color: "#fff",
+    marginBottom: 12,
+    textAlign: "center",
+  },
+  benefitWrapper: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    justifyContent: "space-between",
+  },
+  benefitItem: {
+    width: "48%",
+    backgroundColor: "#ffffff30",
+    marginVertical: 6,
+    padding: 12,
+    borderRadius: 10,
+  },
+  benefitText: {
+    color: "#fff",
+    fontSize: 14,
+  },
+  ctaSection: {
+    marginTop: 30,
+    alignItems: "center",
+  },
+  primaryBtn: {
+    backgroundColor: "#fff",
+    paddingVertical: 14,
+    paddingHorizontal: 30,
+    borderRadius: 25,
+    marginBottom: 12,
+  },
+  primaryBtnText: {
+    color: "#e91e63",
+    fontWeight: "bold",
+    fontSize: 16,
+  },
+  secondaryBtn: {
+    borderColor: "#fff",
+    borderWidth: 1,
+    paddingVertical: 14,
+    paddingHorizontal: 30,
+    borderRadius: 25,
+  },
+  secondaryBtnText: {
+    color: "#fff",
+    fontWeight: "bold",
+    fontSize: 16,
+  },
+  trustContainer: {
+    marginTop: 20,
+    alignItems: "center",
+  },
+  trustText: {
+    color: "#fff",
+    fontSize: 13,
+    textAlign: "center",
   },
 })
 

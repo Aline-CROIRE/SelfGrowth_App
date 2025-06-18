@@ -1,55 +1,71 @@
-import { Text, StyleSheet } from "react-native"
+import { View, Text } from "react-native"
+import { Ionicons } from "@expo/vector-icons"
 import * as Animatable from "react-native-animatable"
+import { globalStyles } from "../../styles/globalStyles"
+import { colors } from "../../styles/colors"
 import CustomButton from "./customButton"
-import { COLORS } from "../../styles/colors"
-import { TYPOGRAPHY, SPACING } from "../../styles/globalStyles"
 
-const EmptyState = ({ icon, title, message, actionLabel, onAction }) => {
+const EmptyState = ({
+  icon = "document-outline",
+  title = "No Data Found",
+  subtitle = "There's nothing here yet",
+  buttonTitle = null,
+  onButtonPress = null,
+  style = {},
+}) => {
   return (
-    <Animatable.View animation="fadeIn" duration={800} style={styles.container}>
-      <Text style={styles.icon}>{icon}</Text>
-      <Text style={styles.title}>{title}</Text>
-      <Text style={styles.message}>{message}</Text>
-      {actionLabel && onAction && (
-        <CustomButton
-          title={actionLabel}
-          onPress={onAction}
-          variant="primary"
-          size="medium"
-          style={styles.actionButton}
-        />
-      )}
-    </Animatable.View>
+    <View style={[globalStyles.container, globalStyles.center, { paddingHorizontal: 40 }, style]}>
+      <Animatable.View animation="fadeInUp" duration={800} style={[globalStyles.center]}>
+        {/* Icon */}
+        <View
+          style={{
+            width: 100,
+            height: 100,
+            borderRadius: 50,
+            backgroundColor: colors.background.overlay,
+            justifyContent: "center",
+            alignItems: "center",
+            marginBottom: 24,
+          }}
+        >
+          <Ionicons name={icon} size={48} color={colors.text.light} />
+        </View>
+
+        {/* Title */}
+        <Text
+          style={[
+            globalStyles.heading,
+            {
+              textAlign: "center",
+              marginBottom: 8,
+              color: colors.text.primary,
+            },
+          ]}
+        >
+          {title}
+        </Text>
+
+        {/* Subtitle */}
+        <Text
+          style={[
+            globalStyles.bodySecondary,
+            {
+              textAlign: "center",
+              marginBottom: buttonTitle ? 32 : 0,
+              lineHeight: 22,
+            },
+          ]}
+        >
+          {subtitle}
+        </Text>
+
+        {/* Action Button */}
+        {buttonTitle && onButtonPress && (
+          <CustomButton title={buttonTitle} onPress={onButtonPress} style={{ minWidth: 200 }} />
+        )}
+      </Animatable.View>
+    </View>
   )
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    alignItems: "center",
-    justifyContent: "center",
-    paddingHorizontal: SPACING.xl,
-    paddingVertical: SPACING.xxl,
-  },
-  icon: {
-    fontSize: 64,
-    marginBottom: SPACING.lg,
-  },
-  title: {
-    ...TYPOGRAPHY.h2,
-    textAlign: "center",
-    marginBottom: SPACING.sm,
-  },
-  message: {
-    ...TYPOGRAPHY.body,
-    color: COLORS.neutral.darkGray,
-    textAlign: "center",
-    marginBottom: SPACING.xl,
-    lineHeight: 24,
-  },
-  actionButton: {
-    minWidth: 200,
-  },
-})
 
 export default EmptyState

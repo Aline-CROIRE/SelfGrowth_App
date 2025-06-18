@@ -1,234 +1,163 @@
-import { View, Text, TouchableOpacity, StyleSheet, ScrollView } from "react-native"
+import { View, Text, TouchableOpacity, ScrollView } from "react-native"
+import { Ionicons } from "@expo/vector-icons"
 import { LinearGradient } from "expo-linear-gradient"
+import * as Animatable from "react-native-animatable"
 import * as Haptics from "expo-haptics"
-import { COLORS } from "../../styles/colors"
-import { TYPOGRAPHY, SPACING, SHADOWS } from "../../styles/globalStyles"
+import { globalStyles } from "../../styles/globalStyles"
+import { colors } from "../../styles/colors"
 
-// 🎯 HOBBY DATA - Each hobby with its personality
-const HOBBIES = [
-  {
-    id: "art",
-    name: "Art & Drawing",
-    icon: "🎨",
-    color: COLORS.hobbies.art,
-    description: "Express creativity through visual art",
-  },
-  {
-    id: "reading",
-    name: "Reading",
-    icon: "📚",
-    color: COLORS.hobbies.reading,
-    description: "Explore worlds through books",
-  },
-  {
-    id: "music",
-    name: "Music",
-    icon: "🎵",
-    color: COLORS.hobbies.music,
-    description: "Create and enjoy musical experiences",
-  },
-  {
-    id: "sports",
-    name: "Sports & Fitness",
-    icon: "⚽",
-    color: COLORS.hobbies.sports,
-    description: "Stay active and healthy",
-  },
-  {
-    id: "writing",
-    name: "Writing",
-    icon: "✍️",
-    color: COLORS.hobbies.writing,
-    description: "Share thoughts through words",
-  },
-  {
-    id: "cooking",
-    name: "Cooking",
-    icon: "👨‍🍳",
-    color: COLORS.hobbies.cooking,
-    description: "Create delicious experiences",
-  },
-  {
-    id: "photography",
-    name: "Photography",
-    icon: "📸",
-    color: COLORS.hobbies.photography,
-    description: "Capture beautiful moments",
-  },
-  {
-    id: "gardening",
-    name: "Gardening",
-    icon: "🌱",
-    color: COLORS.hobbies.gardening,
-    description: "Nurture life and growth",
-  },
+const hobbies = [
+  { id: "drawing", name: "Drawing", icon: "brush-outline", color: "#FF6B6B" },
+  { id: "reading", name: "Reading", icon: "library-outline", color: "#4ECDC4" },
+  { id: "music", name: "Music", icon: "musical-notes-outline", color: "#45B7D1" },
+  { id: "sports", name: "Sports", icon: "fitness-outline", color: "#96CEB4" },
+  { id: "cooking", name: "Cooking", icon: "restaurant-outline", color: "#FFEAA7" },
+  { id: "photography", name: "Photography", icon: "camera-outline", color: "#DDA0DD" },
+  { id: "writing", name: "Writing", icon: "create-outline", color: "#98D8C8" },
+  { id: "gardening", name: "Gardening", icon: "leaf-outline", color: "#F7DC6F" },
 ]
 
-const HobbySelector = ({ selectedHobbies = [], onHobbiesChange, maxSelection = 3 }) => {
-  // 🎯 Handle hobby selection with haptic feedback
+const HobbySelector = ({ selectedHobbies = [], onHobbySelect, multiSelect = false, style = {} }) => {
   const handleHobbyPress = (hobby) => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)
-
-    let newSelection
-    if (selectedHobbies.includes(hobby.id)) {
-      // Remove if already selected
-      newSelection = selectedHobbies.filter((id) => id !== hobby.id)
-    } else if (selectedHobbies.length < maxSelection) {
-      // Add if under limit
-      newSelection = [...selectedHobbies, hobby.id]
-    } else {
-      // Replace last one if at limit
-      newSelection = [...selectedHobbies.slice(0, -1), hobby.id]
+    try {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)
+    } catch (error) {
+      console.log("Haptics not available")
     }
 
-    onHobbiesChange && onHobbiesChange(newSelection)
+    if (multiSelect) {
+      const isSelected = Array.isArray(selectedHobbies) && selectedHobbies.includes(hobby.id)
+      if (isSelected) {
+        const newSelection = selectedHobbies.filter((id) => id !== hobby.id)
+        onHobbySelect(newSelection)
+      } else {
+        const newSelection = [...(selectedHobbies || []), hobby.id]
+        onHobbySelect(newSelection)
+      }
+    } else {
+      onHobbySelect(hobby.id)
+    }
   }
 
-  // 🎨 Render individual hobby card
-  const renderHobbyCard = (hobby) => {
-    const isSelected = selectedHobbies.includes(hobby.id)
-
-    return (
-      <TouchableOpacity
-        key={hobby.id}
-        onPress={() => handleHobbyPress(hobby)}
-        activeOpacity={0.8}
-        style={styles.hobbyContainer}
-      >
-        <LinearGradient
-          colors={isSelected ? [hobby.color, hobby.color + "80"] : [COLORS.neutral.white, COLORS.neutral.lightGray]}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 1 }}
-          style={[styles.hobbyCard, isSelected && styles.selectedCard, !isSelected && SHADOWS.light]}
-        >
-          {/* Selection indicator */}
-          {isSelected && (
-            <View style={styles.selectionBadge}>
-              <Text style={styles.selectionText}>✓</Text>
-            </View>
-          )}
-
-          {/* Hobby icon */}
-          <Text style={styles.hobbyIcon}>{hobby.icon}</Text>
-
-          {/* Hobby name */}
-          <Text style={[styles.hobbyName, { color: isSelected ? COLORS.neutral.white : COLORS.neutral.black }]}>
-            {hobby.name}
-          </Text>
-
-          {/* Hobby description */}
-          <Text
-            style={[
-              styles.hobbyDescription,
-              { color: isSelected ? COLORS.neutral.white + "CC" : COLORS.neutral.darkGray },
-            ]}
-          >
-            {hobby.description}
-          </Text>
-        </LinearGradient>
-      </TouchableOpacity>
-    )
+  const isSelected = (hobbyId) => {
+    if (multiSelect) {
+      return Array.isArray(selectedHobbies) && selectedHobbies.includes(hobbyId)
+    }
+    return selectedHobbies === hobbyId
   }
 
   return (
-    <View style={styles.container}>
-      {/* Header */}
-      <View style={styles.header}>
-        <Text style={styles.title}>Choose Your Passions</Text>
-        <Text style={styles.subtitle}>Select up to {maxSelection} hobbies that inspire you</Text>
-        <Text style={styles.counter}>
-          {selectedHobbies.length} / {maxSelection} selected
-        </Text>
-      </View>
+    <View style={[{ marginVertical: 16 }, style]}>
+      <Text style={[globalStyles.heading, { marginBottom: 16, textAlign: "center", fontSize: 18 }]}>
+        Choose Your Interests
+      </Text>
 
-      {/* Hobby Grid */}
-      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContainer}>
-        <View style={styles.grid}>{HOBBIES.map(renderHobbyCard)}</View>
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        contentContainerStyle={{ paddingHorizontal: 16, paddingVertical: 8 }}
+      >
+        {hobbies.map((hobby, index) => (
+          <Animatable.View key={hobby.id} animation="fadeInUp" delay={index * 100} duration={600}>
+            <TouchableOpacity onPress={() => handleHobbyPress(hobby)} style={{ marginRight: 16 }} activeOpacity={0.8}>
+              {isSelected(hobby.id) ? (
+                <LinearGradient
+                  colors={[hobby.color, colors.primary?.orange || "#FF8A65"]}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 1 }}
+                  style={{
+                    width: 100,
+                    height: 120,
+                    borderRadius: 16,
+                    justifyContent: "center",
+                    alignItems: "center",
+                    shadowColor: hobby.color,
+                    shadowOffset: { width: 0, height: 4 },
+                    shadowOpacity: 0.3,
+                    shadowRadius: 8,
+                    elevation: 8,
+                  }}
+                >
+                  <Ionicons name={hobby.icon} size={32} color="white" />
+                  <Text
+                    style={{
+                      color: "white",
+                      marginTop: 8,
+                      fontWeight: "600",
+                      textAlign: "center",
+                      fontSize: 12,
+                    }}
+                  >
+                    {hobby.name}
+                  </Text>
+                  {/* Selection indicator */}
+                  <View
+                    style={{
+                      position: "absolute",
+                      top: 8,
+                      right: 8,
+                      width: 20,
+                      height: 20,
+                      borderRadius: 10,
+                      backgroundColor: "white",
+                      justifyContent: "center",
+                      alignItems: "center",
+                    }}
+                  >
+                    <Ionicons name="checkmark" size={14} color={hobby.color} />
+                  </View>
+                </LinearGradient>
+              ) : (
+                <View
+                  style={{
+                    width: 100,
+                    height: 120,
+                    borderRadius: 16,
+                    backgroundColor: colors.background?.card || "#FFFFFF",
+                    justifyContent: "center",
+                    alignItems: "center",
+                    borderWidth: 2,
+                    borderColor: colors.text?.light || "#E0E0E0",
+                    shadowColor: colors.shadow?.light || "#000000",
+                    shadowOffset: { width: 0, height: 2 },
+                    shadowOpacity: 0.1,
+                    shadowRadius: 4,
+                    elevation: 3,
+                  }}
+                >
+                  <Ionicons name={hobby.icon} size={32} color={hobby.color} />
+                  <Text
+                    style={{
+                      marginTop: 8,
+                      textAlign: "center",
+                      fontSize: 12,
+                      color: colors.text?.primary || "#333333",
+                    }}
+                  >
+                    {hobby.name}
+                  </Text>
+                </View>
+              )}
+            </TouchableOpacity>
+          </Animatable.View>
+        ))}
       </ScrollView>
+
+      {/* Selection count for multi-select */}
+      {multiSelect && (
+        <Text
+          style={{
+            textAlign: "center",
+            marginTop: 12,
+            fontSize: 14,
+            color: colors.text?.secondary || "#666666",
+          }}
+        >
+          {selectedHobbies?.length || 0} selected
+        </Text>
+      )}
     </View>
   )
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-  header: {
-    paddingHorizontal: SPACING.lg,
-    paddingVertical: SPACING.md,
-    alignItems: "center",
-  },
-  title: {
-    ...TYPOGRAPHY.h2,
-    color: COLORS.primary.coral,
-    marginBottom: SPACING.sm,
-  },
-  subtitle: {
-    ...TYPOGRAPHY.body,
-    textAlign: "center",
-    marginBottom: SPACING.sm,
-  },
-  counter: {
-    ...TYPOGRAPHY.caption,
-    color: COLORS.primary.orange,
-    fontWeight: "600",
-  },
-  scrollContainer: {
-    paddingHorizontal: SPACING.md,
-    paddingBottom: SPACING.xl,
-  },
-  grid: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    justifyContent: "space-between",
-  },
-  hobbyContainer: {
-    width: "48%",
-    marginBottom: SPACING.md,
-  },
-  hobbyCard: {
-    borderRadius: 16,
-    padding: SPACING.lg,
-    alignItems: "center",
-    minHeight: 140,
-    justifyContent: "center",
-    position: "relative",
-  },
-  selectedCard: {
-    ...SHADOWS.medium,
-    transform: [{ scale: 1.02 }],
-  },
-  selectionBadge: {
-    position: "absolute",
-    top: SPACING.sm,
-    right: SPACING.sm,
-    backgroundColor: COLORS.neutral.white,
-    borderRadius: 12,
-    width: 24,
-    height: 24,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  selectionText: {
-    color: COLORS.status.success,
-    fontSize: 14,
-    fontWeight: "bold",
-  },
-  hobbyIcon: {
-    fontSize: 32,
-    marginBottom: SPACING.sm,
-  },
-  hobbyName: {
-    ...TYPOGRAPHY.h3,
-    fontSize: 16,
-    textAlign: "center",
-    marginBottom: SPACING.xs,
-  },
-  hobbyDescription: {
-    ...TYPOGRAPHY.caption,
-    textAlign: "center",
-    fontSize: 11,
-  },
-})
 
 export default HobbySelector

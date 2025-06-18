@@ -1,160 +1,170 @@
-import { TouchableOpacity, Text, StyleSheet } from "react-native"
+"use client"
+
+import { TouchableOpacity, Text, ActivityIndicator, View } from "react-native"
 import { LinearGradient } from "expo-linear-gradient"
 import * as Haptics from "expo-haptics"
-import { COLORS } from "../../styles/colors"
-import { TYPOGRAPHY, SPACING, SHADOWS } from "../../styles/globalStyles"
+import { globalStyles, responsive } from "../../styles/globalStyles"
+import { colors } from "../../styles/colors"
 
 const CustomButton = ({
   title,
   onPress,
-  variant = "primary",
-  size = "medium",
+  variant = "primary", // primary, secondary, outlined, text
+  size = "medium", // small, medium, large
   disabled = false,
-  icon = null,
+  loading = false,
+  leftIcon = null,
+  rightIcon = null,
   style = {},
   textStyle = {},
+  gradientColors = null,
+  fullWidth = true,
 }) => {
-  // 🎯 Handle button press with haptic feedback
   const handlePress = () => {
-    if (!disabled) {
+    if (!disabled && !loading) {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)
-      onPress && onPress()
+      onPress()
     }
   }
 
-  // 🎨 Get button styles based on variant
-  const getButtonConfig = () => {
-    switch (variant) {
-      case "primary":
-        return {
-          gradient: COLORS.gradients.sunrise,
-          textColor: COLORS.neutral.white,
-          shadow: SHADOWS.medium,
-        }
-      case "secondary":
-        return {
-          gradient: COLORS.gradients.gentle,
-          textColor: COLORS.neutral.black,
-          shadow: SHADOWS.light,
-        }
-      case "success":
-        return {
-          gradient: COLORS.gradients.success,
-          textColor: COLORS.neutral.white,
-          shadow: SHADOWS.medium,
-        }
-      case "outline":
-        return {
-          gradient: [COLORS.neutral.white, COLORS.neutral.white],
-          textColor: COLORS.primary.coral,
-          shadow: SHADOWS.light,
-          border: true,
-        }
-      default:
-        return {
-          gradient: COLORS.gradients.sunrise,
-          textColor: COLORS.neutral.white,
-          shadow: SHADOWS.medium,
-        }
+  const getButtonStyle = () => {
+    const baseStyle = {
+      borderRadius: responsive.spacing(25),
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "center",
+      shadowColor: colors.shadow.medium,
+      shadowOffset: { width: 0, height: 4 },
+      shadowOpacity: 0.15,
+      shadowRadius: 8,
+      elevation: 6,
     }
-  }
 
-  // 📏 Get size configuration
-  const getSizeConfig = () => {
+    // Size variations
     switch (size) {
       case "small":
-        return {
-          paddingVertical: SPACING.sm,
-          paddingHorizontal: SPACING.md,
-          fontSize: 14,
-          minHeight: 36,
-        }
+        baseStyle.paddingVertical = responsive.spacing(12)
+        baseStyle.paddingHorizontal = responsive.spacing(24)
+        break
       case "large":
-        return {
-          paddingVertical: SPACING.lg,
-          paddingHorizontal: SPACING.xl,
-          fontSize: 18,
-          minHeight: 56,
-        }
+        baseStyle.paddingVertical = responsive.spacing(20)
+        baseStyle.paddingHorizontal = responsive.spacing(40)
+        break
       default: // medium
-        return {
-          paddingVertical: SPACING.md,
-          paddingHorizontal: SPACING.lg,
-          fontSize: 16,
-          minHeight: 48,
-        }
+        baseStyle.paddingVertical = responsive.spacing(16)
+        baseStyle.paddingHorizontal = responsive.spacing(32)
+        break
     }
+
+    // Variant styles
+    switch (variant) {
+      case "secondary":
+        baseStyle.backgroundColor = colors.background.paper
+        baseStyle.borderWidth = 2
+        baseStyle.borderColor = colors.primary.coral
+        break
+      case "outlined":
+        baseStyle.backgroundColor = "transparent"
+        baseStyle.borderWidth = 1
+        baseStyle.borderColor = colors.border.medium
+        baseStyle.shadowOpacity = 0
+        baseStyle.elevation = 0
+        break
+      case "text":
+        baseStyle.backgroundColor = "transparent"
+        baseStyle.shadowOpacity = 0
+        baseStyle.elevation = 0
+        baseStyle.paddingVertical = responsive.spacing(8)
+        baseStyle.paddingHorizontal = responsive.spacing(16)
+        break
+      default: // primary
+        // Will use gradient
+        break
+    }
+
+    if (disabled) {
+      baseStyle.opacity = 0.6
+    }
+
+    if (!fullWidth) {
+      baseStyle.alignSelf = "flex-start"
+    }
+
+    return [baseStyle, style]
   }
 
-  const buttonConfig = getButtonConfig()
-  const sizeConfig = getSizeConfig()
+  const getTextStyle = () => {
+    const baseTextStyle = {
+      fontSize: responsive.fontSize(16),
+      fontWeight: "600",
+      textAlign: "center",
+    }
+
+    // Size variations
+    switch (size) {
+      case "small":
+        baseTextStyle.fontSize = responsive.fontSize(14)
+        break
+      case "large":
+        baseTextStyle.fontSize = responsive.fontSize(18)
+        break
+    }
+
+    // Variant text colors
+    switch (variant) {
+      case "secondary":
+        baseTextStyle.color = colors.primary.coral
+        break
+      case "outlined":
+        baseTextStyle.color = colors.text.primary
+        break
+      case "text":
+        baseTextStyle.color = colors.primary.coral
+        break
+      default: // primary
+        baseTextStyle.color = colors.text.white
+        break
+    }
+
+    return [baseTextStyle, textStyle]
+  }
+
+  const renderContent = () => (
+    <View style={[globalStyles.row, { opacity: loading ? 0.7 : 1 }]}>
+      {loading ? (
+        <ActivityIndicator color={variant === "primary" ? colors.text.white : colors.primary.coral} size="small" />
+      ) : (
+        <>
+          {leftIcon && <View style={{ marginRight: 8 }}>{leftIcon}</View>}
+          <Text style={getTextStyle()}>{title}</Text>
+          {rightIcon && <View style={{ marginLeft: 8 }}>{rightIcon}</View>}
+        </>
+      )}
+    </View>
+  )
+
+  if (variant === "primary" && !disabled) {
+    const gradientColorsToUse = gradientColors || colors.gradients.primary
+
+    return (
+      <TouchableOpacity onPress={handlePress} disabled={disabled || loading} activeOpacity={0.8}>
+        <LinearGradient
+          colors={gradientColorsToUse}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 0 }}
+          style={getButtonStyle()}
+        >
+          {renderContent()}
+        </LinearGradient>
+      </TouchableOpacity>
+    )
+  }
 
   return (
-    <TouchableOpacity
-      onPress={handlePress}
-      disabled={disabled}
-      activeOpacity={0.8}
-      style={[styles.container, { opacity: disabled ? 0.6 : 1 }, style]}
-    >
-      <LinearGradient
-        colors={buttonConfig.gradient}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 0 }}
-        style={[
-          styles.gradient,
-          {
-            paddingVertical: sizeConfig.paddingVertical,
-            paddingHorizontal: sizeConfig.paddingHorizontal,
-            minHeight: sizeConfig.minHeight,
-          },
-          buttonConfig.shadow,
-          buttonConfig.border && styles.border,
-        ]}
-      >
-        {icon && (
-          <Text style={[styles.icon, { color: buttonConfig.textColor }]}>
-            {icon}
-          </Text>
-        )}
-        <Text
-          style={[
-            styles.text,
-            {
-              color: buttonConfig.textColor,
-              fontSize: sizeConfig.fontSize,
-            },
-            textStyle,
-          ]}
-        >
-          {title}
-        </Text>
-      </LinearGradient>
+    <TouchableOpacity style={getButtonStyle()} onPress={handlePress} disabled={disabled || loading} activeOpacity={0.8}>
+      {renderContent()}
     </TouchableOpacity>
   )
 }
-
-const styles = StyleSheet.create({
-  container: {
-    marginVertical: SPACING.xs,
-  },
-  gradient: {
-    borderRadius: 12,
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  border: {
-    borderWidth: 2,
-    borderColor: COLORS.primary.coral,
-  },
-  text: {
-    ...TYPOGRAPHY.button,
-    textAlign: "center",
-  },
-  icon: {
-    marginRight: SPACING.sm,
-    fontSize: 18,
-  },
-})
 
 export default CustomButton

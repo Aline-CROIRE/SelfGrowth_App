@@ -8,40 +8,40 @@ import { globalStyles } from "../../styles/globalStyles"
 import { colors } from "../../styles/colors"
 import { useData } from "../../context/DataContext"
 import LoadingSpinner from "../../components/common/LoadingSpinner"
-import JournalCard from "../../components/journal/JournalCard"
+import GoalCard from "../../components/goals/GoalCard"
 import EmptyState from "../../components/common/EmptyState"
 import CustomInput from "../../components/common/CustomInput"
 
-const JournalScreen = ({ navigation }) => {
-  const { journals, isLoading, loadAllData } = useData()
+const GoalsScreen = ({ navigation }) => {
+  const { goals, isLoading, loadAllData } = useData()
   const [refreshing, setRefreshing] = useState(false)
   const [searchQuery, setSearchQuery] = useState("")
-  const [filteredJournals, setFilteredJournals] = useState([])
-  const [selectedMood, setSelectedMood] = useState(null)
+  const [filteredGoals, setFilteredGoals] = useState([])
+  const [selectedStatus, setSelectedStatus] = useState(null)
 
   useEffect(() => {
-    filterJournals()
-  }, [journals, searchQuery, selectedMood])
+    filterGoals()
+  }, [goals, searchQuery, selectedStatus])
 
-  const filterJournals = () => {
-    let filtered = [...journals]
+  const filterGoals = () => {
+    let filtered = [...goals]
 
     // Filter by search query
     if (searchQuery) {
       filtered = filtered.filter(
-        (journal) =>
-          journal.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          journal.content.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          (journal.tags && journal.tags.some((tag) => tag.toLowerCase().includes(searchQuery.toLowerCase()))),
+        (goal) =>
+          goal.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          (goal.description && goal.description.toLowerCase().includes(searchQuery.toLowerCase())) ||
+          goal.category.toLowerCase().includes(searchQuery.toLowerCase()),
       )
     }
 
-    // Filter by mood
-    if (selectedMood) {
-      filtered = filtered.filter((journal) => journal.mood && journal.mood.toLowerCase() === selectedMood.toLowerCase())
+    // Filter by status
+    if (selectedStatus) {
+      filtered = filtered.filter((goal) => goal.status === selectedStatus)
     }
 
-    setFilteredJournals(filtered)
+    setFilteredGoals(filtered)
   }
 
   const onRefresh = async () => {
@@ -50,66 +50,65 @@ const JournalScreen = ({ navigation }) => {
     setRefreshing(false)
   }
 
-  const handleJournalPress = (journal) => {
-    navigation.navigate("JournalDetail", { journal })
+  const handleGoalPress = (goal) => {
+    navigation.navigate("GoalDetail", { goal })
   }
 
-  const handleCreateJournal = () => {
-    navigation.navigate("CreateJournal")
+  const handleCreateGoal = () => {
+    navigation.navigate("CreateGoal")
   }
 
-  const toggleMoodFilter = (mood) => {
-    if (selectedMood === mood) {
-      setSelectedMood(null)
+  const toggleStatusFilter = (status) => {
+    if (selectedStatus === status) {
+      setSelectedStatus(null)
     } else {
-      setSelectedMood(mood)
+      setSelectedStatus(status)
     }
   }
 
-  const renderMoodFilter = () => {
-    const moods = [
-      { id: "AMAZING", name: "Amazing", icon: "happy", color: colors.moods.amazing },
-      { id: "GOOD", name: "Good", icon: "happy-outline", color: colors.moods.good },
-      { id: "OKAY", name: "Okay", icon: "remove-circle-outline", color: colors.moods.okay },
-      { id: "BAD", name: "Bad", icon: "sad-outline", color: colors.moods.bad },
-      { id: "TERRIBLE", name: "Terrible", icon: "sad", color: colors.moods.terrible },
+  const renderStatusFilter = () => {
+    const statuses = [
+      { id: "ACTIVE", name: "Active", icon: "play-circle", color: colors.primary.coral },
+      { id: "COMPLETED", name: "Completed", icon: "checkmark-circle", color: colors.success },
+      { id: "PAUSED", name: "Paused", icon: "pause-circle", color: colors.warning },
+      { id: "CANCELLED", name: "Cancelled", icon: "close-circle", color: colors.text.light },
     ]
 
     return (
       <View style={{ marginBottom: 16 }}>
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: 20 }}>
-          {moods.map((mood) => (
+          {statuses.map((status) => (
             <TouchableOpacity
-              key={mood.id}
-              onPress={() => toggleMoodFilter(mood.id)}
+              key={status.id}
+              onPress={() => toggleStatusFilter(status.id)}
               style={{
                 flexDirection: "row",
                 alignItems: "center",
-                backgroundColor: selectedMood === mood.id ? mood.color : colors.background.card,
+                backgroundColor: selectedStatus === status.id ? status.color : colors.background.card,
                 paddingHorizontal: 12,
                 paddingVertical: 8,
                 borderRadius: 20,
                 marginRight: 8,
                 borderWidth: 1,
-                borderColor: mood.color,
+                borderColor: status.color,
               }}
             >
               <Ionicons
-                name={mood.icon}
+                name={status.icon}
                 size={16}
-                color={selectedMood === mood.id ? colors.text.white : mood.color}
+                color={selectedStatus === status.id ? colors.text.white : status.color}
                 style={{ marginRight: 4 }}
               />
               <Text
                 style={[
                   globalStyles.caption,
                   {
-                    color: selectedMood === mood.id ? colors.text.white : mood.color,
+                    color: selectedStatus === status.id ? colors.text.white : status.color,
                     fontFamily: "Poppins-Medium",
                   },
                 ]}
               >
-                {mood.name}
+                {status.name}
               </Text>
             </TouchableOpacity>
           ))}
@@ -127,10 +126,10 @@ const JournalScreen = ({ navigation }) => {
       {/* Header */}
       <LinearGradient colors={colors.gradients.primary} style={{ paddingTop: 60, paddingBottom: 20 }}>
         <View style={{ paddingHorizontal: 20 }}>
-          <Text style={[globalStyles.title, { color: colors.text.white, marginBottom: 16 }]}>Journal</Text>
+          <Text style={[globalStyles.title, { color: colors.text.white, marginBottom: 16 }]}>Goals</Text>
 
           <CustomInput
-            placeholder="Search journals..."
+            placeholder="Search goals..."
             value={searchQuery}
             onChangeText={setSearchQuery}
             leftIcon={<Ionicons name="search" size={20} color={colors.text.secondary} />}
@@ -140,15 +139,15 @@ const JournalScreen = ({ navigation }) => {
         </View>
       </LinearGradient>
 
-      {/* Mood Filter */}
-      {renderMoodFilter()}
+      {/* Status Filter */}
+      {renderStatusFilter()}
 
-      {/* Journal List */}
-      {filteredJournals.length > 0 ? (
+      {/* Goals List */}
+      {filteredGoals.length > 0 ? (
         <FlatList
-          data={filteredJournals}
+          data={filteredGoals}
           keyExtractor={(item) => item.id}
-          renderItem={({ item }) => <JournalCard journal={item} onPress={handleJournalPress} />}
+          renderItem={({ item }) => <GoalCard goal={item} onPress={handleGoalPress} />}
           contentContainerStyle={{ paddingBottom: 100 }}
           refreshControl={
             <RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={[colors.primary.coral]} />
@@ -156,21 +155,21 @@ const JournalScreen = ({ navigation }) => {
         />
       ) : (
         <EmptyState
-          icon="book-outline"
-          title="No Journals Found"
+          icon="flag-outline"
+          title="No Goals Found"
           subtitle={
-            searchQuery || selectedMood
+            searchQuery || selectedStatus
               ? "Try adjusting your search or filters"
-              : "Start documenting your thoughts and experiences"
+              : "Start setting goals to track your progress"
           }
-          buttonTitle={!searchQuery && !selectedMood ? "Create Journal" : null}
-          onButtonPress={!searchQuery && !selectedMood ? handleCreateJournal : null}
+          buttonTitle={!searchQuery && !selectedStatus ? "Create Goal" : null}
+          onButtonPress={!searchQuery && !selectedStatus ? handleCreateGoal : null}
         />
       )}
 
       {/* FAB */}
       <TouchableOpacity
-        onPress={handleCreateJournal}
+        onPress={handleCreateGoal}
         style={{
           position: "absolute",
           bottom: 20,
@@ -194,4 +193,4 @@ const JournalScreen = ({ navigation }) => {
   )
 }
 
-export default JournalScreen
+export default GoalsScreen
