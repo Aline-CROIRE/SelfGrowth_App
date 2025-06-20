@@ -65,7 +65,7 @@ export const journalService = {
 // Get statistics 
 
   getStatistics: async (token) => {
-    const STATISTICS_ENDPOINT = "/journals/statistics"  // Adjust if your endpoint differs
+    const STATISTICS_ENDPOINT = "/ journals/stats"  // Adjust if your endpoint differs
     return await apiRequest(STATISTICS_ENDPOINT, {
       method: HTTP_METHODS.GET,
       headers: getHeaders(token),

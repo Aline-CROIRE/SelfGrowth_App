@@ -1,169 +1,90 @@
-import { View, Text, TouchableOpacity, Image } from "react-native"
+import { View, Text, TouchableOpacity, Image, StyleSheet } from "react-native"
 import { Ionicons } from "@expo/vector-icons"
 import * as Animatable from "react-native-animatable"
 import { globalStyles } from "../../styles/globalStyles"
-import { colors } from "../../styles/colors"
+import { useTheme } from "../../context/ThemeContext" // Assuming you use theme colors
 import { formatDate } from "../../utils/dateUtils"
 
 const BlogCard = ({ post, onPress, style = {} }) => {
-  const truncateHtml = (html, maxLength = 150) => {
+  const { colors } = useTheme(); // Get colors from theme context
+
+  const truncateHtml = (html, maxLength = 100) => {
     if (!html) return ""
-    // Remove HTML tags for preview
     const textOnly = html.replace(/<[^>]*>/g, "")
     return textOnly.length > maxLength ? `${textOnly.substring(0, maxLength)}...` : textOnly
   }
 
-  const getAuthorRole = (role) => {
-    const roleColors = {
-      SUPER_ADMIN: colors.error,
-      ADMIN: colors.warning,
-      USER: colors.text.secondary,
+  const getRoleDisplayName = (role) => {
+    switch (role) {
+      case "SUPER_ADMIN": return "Super Admin"
+      case "ADMIN": return "Admin"
+      default: return "Member"
     }
-    return roleColors[role] || colors.text.secondary
   }
 
   return (
     <Animatable.View animation="fadeInUp" duration={600} style={style}>
       <TouchableOpacity
         onPress={() => onPress && onPress(post)}
-        style={[
-          globalStyles.card,
-          {
-            marginHorizontal: 20,
-            marginBottom: 16,
-          },
-        ]}
+        style={[globalStyles.card, { marginHorizontal: 20, marginBottom: 20, padding: 0, overflow: 'hidden' }]}
         activeOpacity={0.8}
       >
         {/* Featured Image */}
         {post.featuredImage && (
           <Image
             source={{ uri: post.featuredImage }}
-            style={{
-              width: "100%",
-              height: 180,
-              borderRadius: 12,
-              marginBottom: 12,
-            }}
+            style={styles.image}
             resizeMode="cover"
           />
         )}
 
-        {/* Header */}
-        <View style={{ marginBottom: 12 }}>
-          <Text style={[globalStyles.heading, { fontSize: 18, marginBottom: 8 }]} numberOfLines={2}>
+        <View style={styles.contentContainer}>
+          {/* Tags Section - Placed at the top for better design */}
+          {post.tags && post.tags.length > 0 && (
+            <View style={styles.tagsContainer}>
+              {/* ✅ FIX IS HERE: We now access `postTag.tag.name` */}
+              {post.tags.slice(0, 3).map((postTag) => (
+                <View
+                  key={postTag.tagId} // Use a unique ID for the key
+                  style={[styles.tag, { backgroundColor: colors.background.level1 }]}
+                >
+                  <Text style={[styles.tagText, { color: colors.primary.coral }]}>
+                    {postTag.tag.name}
+                  </Text>
+                </View>
+              ))}
+            </View>
+          )}
+          
+          {/* Title */}
+          <Text style={[globalStyles.titleLarge, { color: colors.text.primary, marginVertical: 8 }]} numberOfLines={2}>
             {post.title}
           </Text>
 
-          {/* Author Info */}
-          <View style={[globalStyles.row, { marginBottom: 8 }]}>
-            <View
-              style={{
-                width: 32,
-                height: 32,
-                borderRadius: 16,
-                backgroundColor: colors.background.overlay,
-                justifyContent: "center",
-                alignItems: "center",
-                marginRight: 8,
-              }}
-            >
-              <Text style={[globalStyles.caption, { color: colors.text.secondary, fontFamily: "Poppins-Medium" }]}>
-                {post.author?.firstName?.charAt(0) || post.author?.username?.charAt(0) || "A"}
-              </Text>
-            </View>
+          {/* Content Preview */}
+          <Text style={[globalStyles.body, { color: colors.text.secondary, lineHeight: 22, marginBottom: 16 }]}>
+            {truncateHtml(post.excerpt || post.content)}
+          </Text>
 
-            <View style={{ flex: 1 }}>
-              <Text style={[globalStyles.caption, { fontFamily: "Poppins-Medium", color: colors.text.primary }]}>
-                {post.author?.firstName || post.author?.username || "Anonymous"}
-              </Text>
-              <Text style={[globalStyles.caption, { color: getAuthorRole(post.author?.role) }]}>
-                {post.author?.role?.replace("_", " ") || "User"}
-              </Text>
-            </View>
-
-            {/* Published Status */}
-            <View
-              style={{
-                backgroundColor: post.published ? `${colors.success}20` : `${colors.warning}20`,
-                paddingHorizontal: 8,
-                paddingVertical: 4,
-                borderRadius: 12,
-              }}
-            >
-              <Text
-                style={[
-                  globalStyles.caption,
-                  {
-                    color: post.published ? colors.success : colors.warning,
-                    fontFamily: "Poppins-Medium",
-                  },
-                ]}
-              >
-                {post.published ? "Published" : "Draft"}
-              </Text>
-            </View>
-          </View>
-        </View>
-
-        {/* Content Preview */}
-        <Text style={[globalStyles.bodySecondary, { lineHeight: 20, marginBottom: 12 }]}>
-          {truncateHtml(post.content)}
-        </Text>
-
-        {/* Tags */}
-        {post.tags && post.tags.length > 0 && (
-          <View style={[globalStyles.row, { flexWrap: "wrap", marginBottom: 12 }]}>
-            {post.tags.slice(0, 3).map((tag, index) => (
-              <View
-                key={index}
-                style={{
-                  backgroundColor: colors.background.overlay,
-                  paddingHorizontal: 8,
-                  paddingVertical: 4,
-                  borderRadius: 12,
-                  marginRight: 6,
-                  marginBottom: 4,
-                }}
-              >
-                <Text style={[globalStyles.caption, { color: colors.primary.coral }]}>#{tag}</Text>
+          {/* Footer */}
+          <View style={styles.footer}>
+            <View style={globalStyles.row}>
+              <Image 
+                source={{ uri: post.author?.avatar }} 
+                style={styles.avatar} 
+              />
+              <View>
+                <Text style={[globalStyles.labelLarge, { color: colors.text.primary }]}>
+                  {post.author?.firstName || "User"} {post.author?.lastName || ""}
+                </Text>
+                <Text style={[globalStyles.labelSmall, { color: colors.text.secondary }]}>
+                  {getRoleDisplayName(post.author?.role)}
+                </Text>
               </View>
-            ))}
-            {post.tags.length > 3 && (
-              <Text style={[globalStyles.caption, { color: colors.text.light, alignSelf: "center" }]}>
-                +{post.tags.length - 3} more
-              </Text>
-            )}
-          </View>
-        )}
-
-        {/* Footer */}
-        <View style={[globalStyles.spaceBetween]}>
-          <View style={[globalStyles.row]}>
-            <Ionicons name="time-outline" size={14} color={colors.text.light} />
-            <Text style={[globalStyles.caption, { marginLeft: 4, color: colors.text.light }]}>
-              {formatDate(post.createdAt)}
+            </View>
+            <Text style={[globalStyles.labelMedium, { color: colors.text.secondary }]}>
+              {formatDate(post.publishedAt || post.createdAt)}
             </Text>
-          </View>
-
-          <View style={[globalStyles.row]}>
-            {/* Likes */}
-            <View style={[globalStyles.row, { marginRight: 12 }]}>
-              <Ionicons name="heart-outline" size={14} color={colors.text.light} />
-              <Text style={[globalStyles.caption, { marginLeft: 4, color: colors.text.light }]}>
-                {post.likes?.length || 0}
-              </Text>
-            </View>
-
-            {/* Comments */}
-            <View style={[globalStyles.row, { marginRight: 12 }]}>
-              <Ionicons name="chatbubble-outline" size={14} color={colors.text.light} />
-              <Text style={[globalStyles.caption, { marginLeft: 4, color: colors.text.light }]}>
-                {post.comments?.length || 0}
-              </Text>
-            </View>
-
-            <Ionicons name="chevron-forward" size={16} color={colors.text.light} />
           </View>
         </View>
       </TouchableOpacity>
@@ -171,4 +92,46 @@ const BlogCard = ({ post, onPress, style = {} }) => {
   )
 }
 
-export default BlogCard
+const styles = StyleSheet.create({
+  image: {
+    width: "100%",
+    height: 200,
+  },
+  contentContainer: {
+    padding: 16,
+  },
+  tagsContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    marginBottom: 8,
+  },
+  tag: {
+    borderRadius: 16,
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+    marginRight: 8,
+    marginBottom: 8,
+  },
+  tagText: {
+    fontSize: 12,
+    fontFamily: 'Poppins-SemiBold',
+  },
+  footer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    borderTopWidth: 1,
+    borderColor: '#E5E7EB', // Use a theme color if available
+    paddingTop: 12,
+    marginTop: 4,
+  },
+  avatar: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    marginRight: 12,
+    backgroundColor: '#F3F4F6', // Use a theme color if available
+  }
+});
+
+export default BlogCard;

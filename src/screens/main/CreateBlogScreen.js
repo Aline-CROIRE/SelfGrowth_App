@@ -83,7 +83,7 @@ const CreateBlogScreen = ({ navigation }) => {
     try {
       const postData = {
         ...formData,
-        tags: formData.tags.map((tag) => ({ name: tag })),
+       tags: formData.tags, 
       }
 
       const response = await postService.createPost(postData, token)

@@ -1,19 +1,19 @@
 // API Configuration
 const API_BASE_URL =
   process.env.NODE_ENV === "development"
-    ? "http://172.31.243.124:3000" // Development
-    : "https://your-production-api.com" // Production
+    ? "http://192.168.1.218:3000" // Local development
+    : "https://production-api.com" // Production
 
 export const API_CONFIG = {
   BASE_URL: API_BASE_URL,
-  TIMEOUT: 10000, // 10 seconds
+  TIMEOUT: 10000,
   HEADERS: {
     "Content-Type": "application/json",
     Accept: "application/json",
   },
 }
 
-// HTTP Methods - MISSING EXPORT ADDED
+// HTTP Methods
 export const HTTP_METHODS = {
   GET: "GET",
   POST: "POST",
@@ -22,11 +22,8 @@ export const HTTP_METHODS = {
   PATCH: "PATCH",
 }
 
+// Endpoints
 export const ENDPOINTS = {
-  // Add the missing JOURNALS endpoint that journalService expects
-  JOURNALS: "/api/journal",
-  JOURNAL_BY_ID: (id) => `/api/journal/${id}`,
-  
   AUTH: {
     LOGIN: "/api/auth/login",
     REGISTER: "/api/auth/register",
@@ -38,33 +35,33 @@ export const ENDPOINTS = {
     RESET_PASSWORD: "/api/auth/reset-password",
   },
   USER: {
-    PROFILE: "/api/user/profile",
-    CHANGE_PASSWORD: "/api/user/change-password",
-    UPLOAD_AVATAR: "/api/user/upload-avatar",
+    PROFILE: "/api/users/profile",
+    CHANGE_PASSWORD: "/api/users/change-password",
+    UPLOAD_AVATAR: "/api/users/upload-avatar",
   },
   POSTS: {
     LIST: "/api/posts",
     CREATE: "/api/posts",
-    DETAIL: "/api/posts",
-    UPDATE: "/api/posts",
-    DELETE: "/api/posts",
-    LIKE: "/api/posts",
-    COMMENT: "/api/posts",
+    DETAIL: (id) => `/api/posts/${id}`,
+    UPDATE: (id) => `/api/posts/${id}`,
+    DELETE: (id) => `/api/posts/${id}`,
+    LIKE: (id) => `/api/posts/${id}/like`,
+    COMMENT: (id) => `/api/posts/${id}/comment`,
   },
   JOURNAL: {
-    LIST: "/api/journal",
-    CREATE: "/api/journal",
-    DETAIL: "/api/journal",
-    UPDATE: "/api/journal",
-    DELETE: "/api/journal",
+    LIST: "/api/journals",
+    CREATE: "/api/journals",
+    DETAIL: (id) => `/api/journals/${id}`,
+    UPDATE: (id) => `/api/journals/${id}`,
+    DELETE: (id) => `/api/journals/${id}`,
   },
   GOALS: {
     LIST: "/api/goals",
     CREATE: "/api/goals",
-    DETAIL: "/api/goals",
-    UPDATE: "/api/goals",
-    DELETE: "/api/goals",
-    COMPLETE: "/api/goals",
+    DETAIL: (id) => `/api/goals/${id}`,
+    UPDATE: (id) => `/api/goals/${id}`,
+    DELETE: (id) => `/api/goals/${id}`,
+    COMPLETE: (id) => `/api/goals/${id}/complete`,
   },
   STATISTICS: {
     DASHBOARD: "/api/statistics/dashboard",
@@ -74,32 +71,27 @@ export const ENDPOINTS = {
   },
 }
 
+// Build full URL
 export const createApiUrl = (endpoint) => {
   const url = `${API_CONFIG.BASE_URL}${endpoint}`
-  console.log("API URL:", url) // Debug log
+  console.log("API URL:", url)
   return url
 }
 
-export const createAuthHeaders = (token) => {
-  return {
-    ...API_CONFIG.HEADERS,
-    Authorization: `Bearer ${token}`,
-  }
-}
+// Auth headers
+export const createAuthHeaders = (token) => ({
+  ...API_CONFIG.HEADERS,
+  Authorization: `Bearer ${token}`,
+})
 
-// ADD MISSING EXPORTS
-// getHeaders - alias for createAuthHeaders to match journalService import
-export const getHeaders = (token) => {
-  return createAuthHeaders(token)
-}
+// Alias
+export const getHeaders = createAuthHeaders
 
-// apiRequest - the main API request function that journalService expects
+// Make API request
 export const apiRequest = async (endpoint, options = {}) => {
   const url = createApiUrl(endpoint)
-  
-  // Log the request for debugging
   logRequest(url, options)
-  
+
   try {
     const response = await fetch(url, {
       ...options,
@@ -110,15 +102,13 @@ export const apiRequest = async (endpoint, options = {}) => {
     })
 
     let data
-    const contentType = response.headers.get('content-type')
-    
-    if (contentType && contentType.includes('application/json')) {
+    const contentType = response.headers.get("content-type")
+    if (contentType && contentType.includes("application/json")) {
       data = await response.json()
     } else {
       data = await response.text()
     }
 
-    // Log the response for debugging
     logResponse(url, response, data)
 
     if (!response.ok) {
@@ -127,20 +117,20 @@ export const apiRequest = async (endpoint, options = {}) => {
 
     return {
       success: true,
-      data: data,
+      data,
       status: response.status,
     }
   } catch (error) {
-    console.error('API Request failed:', error)
+    console.error("API Request failed:", error)
     return {
       success: false,
-      message: error.message,
+      message: error.message || "Unknown error",
       status: error.status || 500,
     }
   }
 }
 
-// Network status helper
+// Network status check
 export const checkNetworkStatus = async () => {
   try {
     const response = await fetch(`${API_CONFIG.BASE_URL}/health`, {
@@ -154,17 +144,16 @@ export const checkNetworkStatus = async () => {
   }
 }
 
-// Request interceptor for debugging
+// Logging
 export const logRequest = (url, options) => {
   console.log("🚀 API Request:", {
     url,
     method: options.method,
     headers: options.headers,
-    body: options.body ? JSON.parse(options.body) : null,
+    body: options.body ? safelyParseBody(options.body) : null,
   })
 }
 
-// Response interceptor for debugging
 export const logResponse = (url, response, data) => {
   console.log("📥 API Response:", {
     url,
@@ -172,4 +161,13 @@ export const logResponse = (url, response, data) => {
     statusText: response.statusText,
     data,
   })
+}
+
+// Safe body parse
+const safelyParseBody = (body) => {
+  try {
+    return JSON.parse(body)
+  } catch (e) {
+    return body
+  }
 }

@@ -8,12 +8,10 @@ import * as Animatable from "react-native-animatable"
 import { globalStyles } from "../../styles/globalStyles"
 import { colors } from "../../styles/colors"
 import { useAuth } from "../../context/AuthContext"
-import { useEmail } from "../../context/EmailContext"
 import { useTheme } from "../../context/ThemeContext"
 import CustomInput from "../../components/common/CustomInput"
 import CustomButton from "../../components/common/customButton"
 import HobbySelector from "../../components/hobbies/HobbySelector"
-import EmailStatusCard from "../../components/common/EmailStatusCard"
 
 const RegisterScreen = ({ navigation }) => {
   const [currentStep, setCurrentStep] = useState(1)
@@ -29,10 +27,8 @@ const RegisterScreen = ({ navigation }) => {
   const [errors, setErrors] = useState({})
   const [showPassword, setShowPassword] = useState(false)
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
-  const [registrationComplete, setRegistrationComplete] = useState(false)
 
   const { register, isLoading, error, clearError } = useAuth()
-  const { sendVerificationEmail, emailStatus } = useEmail()
   const { setSelectedHobby } = useTheme()
 
   const validateStep1 = () => {
@@ -91,7 +87,6 @@ const RegisterScreen = ({ navigation }) => {
 
   const handleNext = () => {
     clearError()
-
     if (currentStep === 1 && validateStep1()) {
       setCurrentStep(2)
     }
@@ -128,19 +123,24 @@ const RegisterScreen = ({ navigation }) => {
     const result = await register(registrationData)
 
     if (result.success) {
-      setRegistrationComplete(true)
-      setCurrentStep(3) // Move to success step
+      // Show success notification and redirect to login
+      Alert.alert(
+        "Registration Successful",
+        `A verification email has been sent to ${formData.email}. Please check your inbox to activate your account.`,
+        [
+          {
+            text: "OK",
+            onPress: () => navigation.navigate("Login"),
+          },
+        ],
+        { cancelable: false }
+      )
     } else {
       Alert.alert("Registration Failed", result.message || "Please try again.")
     }
   }
 
-  const handleResendVerification = async () => {
-    await sendVerificationEmail(formData.email)
-  }
-
   const updateFormData = (field, value) => {
-    console.log(`Updating ${field}:`, value) // Debug log
     setFormData((prev) => ({ ...prev, [field]: value }))
     if (errors[field]) {
       setErrors((prev) => ({ ...prev, [field]: null }))
@@ -230,10 +230,7 @@ const RegisterScreen = ({ navigation }) => {
 
       <HobbySelector
         selectedHobbies={formData.hobbies || []}
-        onHobbySelect={(hobbies) => {
-          console.log("Selected hobbies:", hobbies) // Debug log
-          updateFormData("hobbies", hobbies)
-        }}
+        onHobbySelect={(hobbies) => updateFormData("hobbies", hobbies)}
         multiSelect={true}
         style={{ marginVertical: 20 }}
       />
@@ -253,63 +250,6 @@ const RegisterScreen = ({ navigation }) => {
       )}
 
       <CustomButton title="Create Account" onPress={handleRegister} loading={isLoading} style={{ marginTop: 20 }} />
-    </Animatable.View>
-  )
-
-  const renderStep3 = () => (
-    <Animatable.View animation="bounceIn" duration={1000}>
-      <View style={[globalStyles.center, globalStyles.my20]}>
-        <View
-          style={{
-            width: 80,
-            height: 80,
-            borderRadius: 40,
-            backgroundColor: colors.success.bg,
-            ...globalStyles.center,
-            marginBottom: 20,
-          }}
-        >
-          <Ionicons name="checkmark-circle" size={50} color={colors.success.main} />
-        </View>
-
-        <Text style={[globalStyles.heading, { textAlign: "center", marginBottom: 12 }]}>
-          🎉 Registration Successful!
-        </Text>
-
-        <Text style={[globalStyles.bodySecondary, { textAlign: "center", marginBottom: 24 }]}>
-          Welcome to SelfGrow! We've sent a verification email to {formData.email}
-        </Text>
-      </View>
-
-      {/* Email Status Card */}
-      <EmailStatusCard
-        type="verification"
-        email={formData.email}
-        onResend={handleResendVerification}
-        style={{ marginBottom: 20 }}
-      />
-
-      {/* Next Steps */}
-      <View style={[globalStyles.card, { backgroundColor: colors.info.bg }]}>
-        <Text style={[globalStyles.titleMedium, { color: colors.info.main, marginBottom: 12 }]}>📋 Next Steps:</Text>
-        <View style={globalStyles.my4}>
-          <Text style={[globalStyles.bodySmall, { color: colors.text.secondary }]}>
-            1. Check your email inbox (and spam folder)
-          </Text>
-        </View>
-        <View style={globalStyles.my4}>
-          <Text style={[globalStyles.bodySmall, { color: colors.text.secondary }]}>
-            2. Click the verification link in the email
-          </Text>
-        </View>
-        <View style={globalStyles.my4}>
-          <Text style={[globalStyles.bodySmall, { color: colors.text.secondary }]}>
-            3. Return here to sign in and start your journey!
-          </Text>
-        </View>
-      </View>
-
-      <CustomButton title="Go to Sign In" onPress={() => navigation.navigate("Login")} style={{ marginTop: 20 }} />
     </Animatable.View>
   )
 
@@ -338,53 +278,49 @@ const RegisterScreen = ({ navigation }) => {
           </TouchableOpacity>
 
           {/* Progress Indicator */}
-          {!registrationComplete && (
-            <View style={[globalStyles.row, { marginBottom: 20 }]}>
+          <View style={[globalStyles.row, { marginBottom: 20 }]}>
+            <View
+              style={{
+                flex: 1,
+                height: 4,
+                backgroundColor: "rgba(255, 255, 255, 0.3)",
+                borderRadius: 2,
+                marginRight: 8,
+              }}
+            >
               <View
                 style={{
-                  flex: 1,
-                  height: 4,
-                  backgroundColor: "rgba(255, 255, 255, 0.3)",
+                  height: "100%",
+                  backgroundColor: colors.text.white,
                   borderRadius: 2,
-                  marginRight: 8,
+                  width: currentStep >= 1 ? "100%" : "0%",
                 }}
-              >
-                <View
-                  style={{
-                    height: "100%",
-                    backgroundColor: colors.text.white,
-                    borderRadius: 2,
-                    width: currentStep >= 1 ? "100%" : "0%",
-                  }}
-                />
-              </View>
-              <View
-                style={{
-                  flex: 1,
-                  height: 4,
-                  backgroundColor: "rgba(255, 255, 255, 0.3)",
-                  borderRadius: 2,
-                  marginLeft: 8,
-                }}
-              >
-                <View
-                  style={{
-                    height: "100%",
-                    backgroundColor: colors.text.white,
-                    borderRadius: 2,
-                    width: currentStep >= 2 ? "100%" : "0%",
-                  }}
-                />
-              </View>
+              />
             </View>
-          )}
+            <View
+              style={{
+                flex: 1,
+                height: 4,
+                backgroundColor: "rgba(255, 255, 255, 0.3)",
+                borderRadius: 2,
+                marginLeft: 8,
+              }}
+            >
+              <View
+                style={{
+                  height: "100%",
+                  backgroundColor: colors.text.white,
+                  borderRadius: 2,
+                  width: currentStep >= 2 ? "100%" : "0%",
+                }}
+              />
+            </View>
+          </View>
 
           <Animatable.View animation="fadeInDown" duration={1000}>
-            <Text style={[globalStyles.title, { color: colors.text.white, marginBottom: 8 }]}>
-              {registrationComplete ? "Check Your Email" : "Join SelfGrow"}
-            </Text>
+            <Text style={[globalStyles.title, { color: colors.text.white, marginBottom: 8 }]}>Join SelfGrow</Text>
             <Text style={[globalStyles.bodySecondary, { color: colors.text.white, opacity: 0.9 }]}>
-              {registrationComplete ? "Verification email sent" : `Step ${currentStep} of 2`}
+              {`Step ${currentStep} of 2`}
             </Text>
           </Animatable.View>
         </View>
@@ -401,21 +337,19 @@ const RegisterScreen = ({ navigation }) => {
             paddingBottom: 30,
           }}
         >
-          {registrationComplete ? renderStep3() : currentStep === 1 ? renderStep1() : renderStep2()}
+          {currentStep === 1 ? renderStep1() : renderStep2()}
 
           {/* Sign In Link */}
-          {!registrationComplete && (
-            <View style={[globalStyles.row, { justifyContent: "center", marginTop: 30 }]}>
-              <Text style={globalStyles.bodySecondary}>Already have an account? </Text>
-              <TouchableOpacity onPress={() => navigation.navigate("Login")}>
-                <Text
-                  style={[globalStyles.bodySecondary, { color: colors.primary.coral, fontFamily: "Poppins-SemiBold" }]}
-                >
-                  Sign In
-                </Text>
-              </TouchableOpacity>
-            </View>
-          )}
+          <View style={[globalStyles.row, { justifyContent: "center", marginTop: 30 }]}>
+            <Text style={globalStyles.bodySecondary}>Already have an account? </Text>
+            <TouchableOpacity onPress={() => navigation.navigate("Login")}>
+              <Text
+                style={[globalStyles.bodySecondary, { color: colors.primary.coral, fontFamily: "Poppins-SemiBold" }]}
+              >
+                Sign In
+              </Text>
+            </TouchableOpacity>
+          </View>
         </View>
       </ScrollView>
     </LinearGradient>

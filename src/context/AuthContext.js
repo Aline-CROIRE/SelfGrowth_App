@@ -30,6 +30,16 @@ const authReducer = (state, action) => {
         error: null,
       }
 
+    case "LOGIN_SUSPENDED":
+      return {
+        ...state,
+        user: action.payload.user,
+        token: null,
+        isAuthenticated: false,
+        isLoading: false,
+        error: null,
+      }
+
     case "LOGOUT_SUCCESS":
       return {
         user: null,
@@ -81,6 +91,16 @@ export const AuthProvider = ({ children }) => {
         const user = JSON.parse(userData)
         console.log("Restoring user session:", user.email)
 
+        // Check if user is suspended
+        if (user.status === "SUSPENDED") {
+          console.log("User is suspended, redirecting to suspended screen")
+          dispatch({
+            type: "LOGIN_SUSPENDED",
+            payload: { user },
+          })
+          return
+        }
+
         dispatch({
           type: "LOGIN_SUCCESS",
           payload: { user, token },
@@ -95,7 +115,7 @@ export const AuthProvider = ({ children }) => {
     }
   }
 
-  const login = async (email, password) => {
+  const login = async (email, password, navigation) => {
     try {
       console.log("Starting login process...")
       dispatch({ type: "SET_LOADING", payload: true })
@@ -105,17 +125,44 @@ export const AuthProvider = ({ children }) => {
       console.log("Login response received:", response.success)
 
       if (response.success) {
-        // Store token and user data
-        await AsyncStorage.setItem("userToken", response.data.accessToken)
-        await AsyncStorage.setItem("userData", JSON.stringify(response.data.user))
+        const { user, accessToken } = response.data
 
-        console.log("Login successful, user stored:", response.data.user.email)
+        // Check if user is suspended
+        if (user.status === "SUSPENDED") {
+          console.log("User is suspended")
+          dispatch({
+            type: "LOGIN_SUSPENDED",
+            payload: { user },
+          })
+
+          // Navigate to suspended screen
+          if (navigation) {
+            navigation.navigate("Suspended", {
+              suspensionReason: user.suspensionReason || "Your account has been suspended by an administrator.",
+              userEmail: user.email,
+            })
+          }
+
+          return { success: false, suspended: true, message: "Account suspended" }
+        }
+
+        // Check if user is inactive
+        if (user.status === "INACTIVE") {
+          dispatch({ type: "SET_ERROR", payload: "Account is inactive. Please contact support." })
+          return { success: false, message: "Account is inactive. Please contact support." }
+        }
+
+        // Store token and user data
+        await AsyncStorage.setItem("userToken", accessToken)
+        await AsyncStorage.setItem("userData", JSON.stringify(user))
+
+        console.log("Login successful, user stored:", user.email)
 
         dispatch({
           type: "LOGIN_SUCCESS",
           payload: {
-            user: response.data.user,
-            token: response.data.accessToken,
+            user,
+            token: accessToken,
           },
         })
 
