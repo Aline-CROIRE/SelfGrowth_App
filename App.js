@@ -5,14 +5,14 @@ import { EmailProvider } from "./src/context/EmailContext"
 import { ThemeProvider } from "./src/context/ThemeContext"
 import { DataProvider } from "./src/context/DataContext"
 import { AppProvider } from "./src/context/AppContext"
-import { UserRoleProvider } from "./src/context/UserRoleContext" // ✅ Import added
+import { UserRoleProvider } from "./src/context/UserRoleContext" 
 import AppNavigator from "./src/navigation/AppNavigator"
 
 export default function App() {
   return (
     <AppProvider>
       <AuthProvider>
-        <UserRoleProvider> {/* ✅ Now wrapped inside here */}
+        <UserRoleProvider> 
           <ThemeProvider>
             <EmailProvider>
               <DataProvider>
