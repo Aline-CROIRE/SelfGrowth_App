@@ -33,7 +33,7 @@ const CreateBlogScreen = ({ navigation }) => {
   const [currentTag, setCurrentTag] = useState("")
   const [isGeneratingContent, setIsGeneratingContent] = useState(false)
 
-  // Predefined tags for easy selection
+  
   const suggestedTags = [
     "Personal Growth",
     "Wellness",
@@ -232,7 +232,7 @@ const CreateBlogScreen = ({ navigation }) => {
             </TouchableOpacity>
           </View>
 
-          {/* Progress indicator */}
+      
           <View style={[globalStyles.rowCenter, globalStyles.my16]}>
             <View style={globalStyles.row}>
               {[1, 2, 3, 4].map((step) => (
