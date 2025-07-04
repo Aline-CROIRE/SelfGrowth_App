@@ -1,5 +1,4 @@
 "use client"
-
 import { useState } from "react"
 import { View, Text, ScrollView, TouchableOpacity, Alert, Image, KeyboardAvoidingView, Platform } from "react-native"
 import { LinearGradient } from "expo-linear-gradient"
